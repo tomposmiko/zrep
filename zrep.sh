@@ -3,23 +3,41 @@
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 date=`date +"%Y-%m-%d"`
-if tty 2>&1 > /dev/null;
- then
-	console=1
- else
-	console=0
+
+confdir="/tank/etc"
+conffile="$confdir/zrep.conf"
+dataset=$1
+
+if /usr/bin/tty > /dev/null;
+    then
+        quiet=0
+        interactive=1
+		console=1
+	else
+		console=0
 fi
 
+# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
+uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
+if [[ $interactive -eq 1 ]]
+   then say() { echo -ne $1;echo -e $nocolor; }
+                # Colors, yo!
+                green="\e[1;32m"
+                red="\e[1;31m"
+                blue="\e[1;34m"
+                purple="\e[1;35m"
+                cyan="\e[1;36m"
+                nocolor="\e[0m"
+   else
+                # do nothing
+                say() { true; }
+fi
 
 if [ $console -eq 1 ];
  then
 	args="-o --create-destination"
 fi
 
-
-confdir="/tank/etc"
-conffile="$confdir/zrep.conf"
-dataset=$1
 
 if [ -z $dataset ];then
 	echo "No dataset defined"
