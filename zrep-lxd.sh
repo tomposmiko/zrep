@@ -73,7 +73,7 @@ fi
 
 
 # is the matching pattern unique?
-if [ $full_conf_entry -eq 0];
+if [ $full_conf_entry -eq 0 ];
 	then
 		same_entries_in_config=`awk -F: '/'":$1"':/ { print $1":"$2":"$3 }' $conffile|wc -l`
 	else
