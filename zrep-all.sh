@@ -6,9 +6,10 @@ echo "BEGIN: `date "+%Y-%m-%d %H:%M:%S"`"
 confdir="/tank/etc"
 conffile="$confdir/zrep.conf"
 
-for i in `cut -f1 -d: $conffile`;do
+for i in `cat $conffile`;do
 	echo ===== $i =====
 	zrep.sh $i
+	echo
 done
 
 echo "END: `date "+%Y-%m-%d %H:%M:%S"`"
