@@ -133,6 +133,8 @@ f_zrep(){
 					zfs create tank/zrep-lxd/$virttype/$s_host/$vm
 			fi
 	fi
+	# can be readded with criu 1.9+
+	#ssh $s_host lxc snapshot $vm zas_${date}
 	ssh $s_host lxc snapshot --stateful $vm zas_${date}
 	zreplicate $ssh_opts --no-replication-stream $args zfs@$s_host:tank/$zfs_path/$vm tank/zrep-lxd/$virttype/$s_host/$vm
 }
