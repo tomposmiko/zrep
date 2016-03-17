@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 echo "BEGIN: `date "+%Y-%m-%d %H:%M:%S"`"
 
 confdir="/tank/etc"
