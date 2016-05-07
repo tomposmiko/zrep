@@ -112,7 +112,7 @@ fi
 # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/sect-Security_Guide-Encryption-OpenSSL_Intel_AES-NI_Engine.html
 if [ x`grep -m1 -w -o aes /proc/cpuinfo` == x"aes" ];
 	then
-		ssh_opts="--ssh-cipher=aes128-cbc"
+		ssh_opts="--ssh-cipher=aes256-gcm@openssh.com"
 fi
 
 
@@ -137,7 +137,7 @@ f_zrep(){
 	#ssh $s_host lxc snapshot $vm zas_${date}
         if [ "$virttype" = lxd ];
             then
-				ssh lxd-backup@$s_host lxc snapshot --stateful $vm zas_${date}
+				ssh lxd-backup@$s_host lxc snapshot $vm zas_${date}
             else
 				ssh zfs@$s_host zfs snapshot -r tank/$virttype/$vm@zas-${date}
         fi
