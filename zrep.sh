@@ -91,6 +91,7 @@ if [ $full_conf_entry -eq 0 ];
 	then
 		conf_entry=`awk -F: '/'":$1"':/ { print $1":"$2":"$3 }' $conffile`
 		$0 $conf_entry
+		exit $?
 fi
 
 
@@ -144,7 +145,6 @@ f_zrep(){
 
 	zreplicate $ssh_opts --no-replication-stream $args zfs@$s_host:tank/$zfs_path/$vm tank/zrep/$virttype/$s_host/$vm
 }
-
 
 
 f_zrep $1
