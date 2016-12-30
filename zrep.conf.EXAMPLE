@@ -1,0 +1,2 @@
+vhostA:vm1:lxc
+vhostB:vm2:kvm
