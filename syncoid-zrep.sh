@@ -4,7 +4,7 @@ export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/
 
 date=`date +"%Y-%m-%d--%H"`
 
-confdir="/tank/etc"
+confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 
 if /usr/bin/tty > /dev/null;
