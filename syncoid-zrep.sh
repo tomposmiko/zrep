@@ -32,11 +32,12 @@ if [[ "$interactive" -eq 1 ]]
 				say() { true; }
 fi
 
-if [ "$console" -eq 1 ];
- then
+if [ "$console" -eq 1 ]
+then
 	args=""
+else
+	args="-quiet"
 fi
-
 
 # usage
 if [ -z "$1" ];then
@@ -53,7 +54,7 @@ fi
 # whether it's a short or long parameter for the source?
 if echo "$1" | grep -q : ;
 	then
-		if echo "$1" | egrep "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
+		if echo "$1" | egrep -q "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
 			then
 				full_conf_entry=1
 			else
@@ -113,7 +114,7 @@ fi
 # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/sect-Security_Guide-Encryption-OpenSSL_Intel_AES-NI_Engine.html
 if [ x`grep -m1 -w -o aes /proc/cpuinfo` == x"aes" ];
 	then
-		ssh_opts="--ssh-cipher=aes256-gcm@openssh.com"
+		ssh_opts="-c aes256-gcm@openssh.com"
 fi
 
 
@@ -143,7 +144,7 @@ f_zrep(){
 			ssh syncoid@"$s_host" "zfs snapshot -r tank/$virttype/$vm@zas-${date}"
 	fi
 
-	syncoid $ssh_opts $args --quiet syncoid@"$s_host:tank/$zfs_path/$vm" "tank/zrep/$virttype/$s_host/$vm"
+	syncoid $ssh_opts $args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/zrep/$virttype/$s_host/$vm"
 }
 
 

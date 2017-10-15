@@ -7,9 +7,8 @@ confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 
 for i in `cat $conffile`;do
-	echo ===== $i =====
+	echo "==== $i ===="
 	syncoid-zrep.sh $i
-	echo
 done
 
 echo "END: `date "+%Y-%m-%d %H:%M:%S"`"
