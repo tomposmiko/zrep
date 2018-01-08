@@ -6,7 +6,7 @@ echo "BEGIN: `date "+%Y-%m-%d %H:%M:%S"`"
 confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 
-for i in `cat $conffile`;do
+for i in `grep -v ^\# $conffile`;do
 	echo ===== $i =====
 	zrep.sh $i
 	echo
