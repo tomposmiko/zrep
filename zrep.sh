@@ -12,6 +12,7 @@ norollback="--no-rollback"
 quiet="0"
 debug="0"
 sourcedef=""
+to_list=0
 
 if /usr/bin/tty > /dev/null;
     then
@@ -39,7 +40,7 @@ fi
 
 f_check_switch_param(){
     if echo x"$1" |grep -q ^x$;
-	    then
+        then
             say "$red Missing argument!"
             exit 1
     fi
@@ -81,7 +82,8 @@ while [ "$#" -gt "0" ]; do
     -l|--list)
         PARAM="$2"
         f_check_switch_param "$PARAM"
-        dst_to_list="$PARAM"
+        to_list=1
+        sourcedef="$PARAM"
         shift 2
      ;;
 
@@ -184,6 +186,17 @@ if [ x`grep -m1 -w -o aes /proc/cpuinfo` == x"aes" ];
         ssh_opts="-c aes256-gcm@openssh.com"
 fi
 
+f_list(){
+    if [ -z "$sourcedef" ];
+        then
+            say "$red No VM defined"
+            exit 1
+    fi
+
+    zfs list -t all -r "tank/$zrepds/$vm"
+    exit 0
+}
+
 
 f_zrep(){
     if [ -z "$sourcedef" ];
@@ -202,5 +215,9 @@ f_zrep(){
     syncoid -r $norollback $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
+if [ "$to_list" -eq 1 ];
+    then
+        f_list
+fi
 
-f_zrep $1
+f_zrep
