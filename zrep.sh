@@ -5,8 +5,8 @@ export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/
 date=`date +"%Y-%m-%d--%H"`
 
 confdir="/etc/zrep"
-conffile="$confdir/zrep-external.conf"
-zrepds="zrep-external"
+conffile="$confdir/zrep.conf"
+zrepds="zrep"
 
 if /usr/bin/tty > /dev/null;
 	then
