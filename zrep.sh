@@ -2,6 +2,39 @@
 
 export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+if /usr/bin/tty > /dev/null;
+    then
+        export console=1
+        interactive=1
+    else
+        export console=0
+fi
+
+# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
+uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
+if [[ "$interactive" -eq 1 ]]
+   then say() { echo -ne "$1";echo -e "$nocolor"; }
+                # Colors, yo!
+                export green="\e[1;32m"
+                export red="\e[1;31m"
+                export blue="\e[1;34m"
+                export purple="\e[1;35m"
+                export cyan="\e[1;36m"
+                export nocolor="\e[0m"
+   else
+                # do nothing
+                say() { true; }
+fi
+
+f_check_switch_param(){
+    if echo x"$1" |grep -q ^x$;
+        then
+            say "$red" "Missing argument!"
+            exit 1
+    fi
+}
+
+
 date=`date +"%Y-%m-%d--%H"`
 
 confdir="/etc/zrep"
@@ -14,37 +47,6 @@ debug="0"
 sourcedef=""
 to_list=0
 
-if /usr/bin/tty > /dev/null;
-    then
-        console=1
-        interactive=1
-    else
-        console=0
-fi
-
-# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
-uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
-if [[ "$interactive" -eq 1 ]]
-   then say() { echo -ne $1;echo -e "$nocolor"; }
-                # Colors, yo!
-                green="\e[1;32m"
-                red="\e[1;31m"
-                blue="\e[1;34m"
-                purple="\e[1;35m"
-                cyan="\e[1;36m"
-                nocolor="\e[0m"
-   else
-                # do nothing
-                say() { true; }
-fi
-
-f_check_switch_param(){
-    if echo x"$1" |grep -q ^x$;
-        then
-            say "$red Missing argument!"
-            exit 1
-    fi
-}
 
 f_usage(){
     echo "Usage:"
@@ -123,7 +125,7 @@ fi
 # is the source a long or short paramater?
 if echo "$sourcedef" | grep -q : ;
     then
-        if echo "$sourcedef" | egrep -q "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
+        if echo "$sourcedef" | grep -E -q "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
             then
                 full_conf_entry=1
             else
@@ -132,7 +134,7 @@ if echo "$sourcedef" | grep -q : ;
         fi
 
     else
-        if echo "$sourcedef" | egrep -q "[A-Za-z0-9][A-Za-z0-9-]+"
+        if echo "$sourcedef" | grep -E -q "[A-Za-z0-9][A-Za-z0-9-]+"
             then
                 full_conf_entry=0
             else
@@ -157,10 +159,10 @@ fi
 
 
 # if it's not a full (short) line definition, rerun the script with the full one
-if [ $full_conf_entry -eq 0 ];
+if [ "$full_conf_entry" -eq 0 ];
     then
-        conf_entry=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' $conffile`
-        $0 -s $conf_entry
+        conf_entry=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile"`
+        "$0" -s "$conf_entry"
         exit $?
 fi
 
@@ -181,7 +183,8 @@ fi
 
 # ssh tuning
 # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/sect-Security_Guide-Encryption-OpenSSL_Intel_AES-NI_Engine.html
-if [ x`grep -m1 -w -o aes /proc/cpuinfo` == x"aes" ];
+cpu_aes=`grep -m1 -w -o aes /proc/cpuinfo`
+if [ x"$cpu_aes" == x"aes" ];
     then
         ssh_opts="-c aes256-gcm@openssh.com"
 fi
@@ -189,7 +192,7 @@ fi
 f_list(){
     if [ -z "$sourcedef" ];
         then
-            say "$red No VM defined"
+            say "$red" "No VM defined"
             exit 1
     fi
 
@@ -201,18 +204,18 @@ f_list(){
 f_zrep(){
     if [ -z "$sourcedef" ];
         then
-            say "$red No VM defined"
+            say "$red" "No VM defined"
             exit 1
     fi
 
     if [ "$virttype" = "lxd" ];
         then
-            ssh syncoid@"$s_host" "lxc snapshot $vm zas-${date}"
+            ssh "syncoid@$s_host" lxc snapshot "$vm" zas-"${date}"
         else
-            ssh syncoid@"$s_host" "zfs snapshot -r tank/$virttype/$vm@zas-${date}"
+            ssh "syncoid@$s_host" zfs snapshot -r tank/"$virttype"/"$vm"@zas-"${date}"
     fi
 
-    syncoid -r $norollback $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+    syncoid -r "$norollback" "$ssh_opts" "$syncoid_args" syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 if [ "$to_list" -eq 1 ];
