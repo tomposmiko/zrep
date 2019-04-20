@@ -5,7 +5,8 @@ export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/
 date=`date +"%Y-%m-%d--%H"`
 
 confdir="/etc/zrep"
-conffile="$confdir/zrep.conf"
+conffile="$confdir/zrep-external.conf"
+zrepds="zrep-external"
 
 if /usr/bin/tty > /dev/null;
 	then
@@ -34,7 +35,7 @@ fi
 
 if [ "$console" -eq 1 ]
 then
-	args=""
+	args="-debug"
 else
 	args="-quiet"
 fi
@@ -125,9 +126,9 @@ f_zrep(){
 	fi
 
 	# create destination zfs path recursively
-	if ! zfs list -o name "tank/zrep/$virttype/$s_host" > /dev/null 2>&1;
+	if ! zfs list -o name "tank/$zrepds/$virttype/$s_host" > /dev/null 2>&1;
 		then
-			zfs create "tank/zrep/$virttype/$s_host"
+			zfs create "tank/$zrepds/$virttype/$s_host"
 			#zfs create tank/zrep/$virttype/$s_host/$vm
 		#else
 		#	if ! zfs list -o name tank/zrep/$virttype/$s_host/$vm > /dev/null 2>&1;
@@ -144,7 +145,7 @@ f_zrep(){
 			ssh syncoid@"$s_host" "zfs snapshot -r tank/$virttype/$vm@zas-${date}"
 	fi
 
-	syncoid $ssh_opts $args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/zrep/$virttype/$s_host/$vm"
+	syncoid -r $ssh_opts $args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$virttype/$s_host/$vm"
 }
 
 
