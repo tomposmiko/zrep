@@ -7,12 +7,16 @@ date=`date +"%Y-%m-%d--%H"`
 confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 zrepds="zrep"
+syncoid_args=""
+norollback="--no-rollback"
+quiet="0"
+debug="0"
+sourcedef=""
 
 if /usr/bin/tty > /dev/null;
 	then
-		quiet=0
-		interactive=1
 		console=1
+		interactive=1
 	else
 		console=0
 fi
@@ -33,29 +37,83 @@ if [[ "$interactive" -eq 1 ]]
 				say() { true; }
 fi
 
-if [ "$console" -eq 1 ]
-then
-	args="-debug"
-else
-	args="-quiet"
-fi
+f_check_switch_param(){
+    if echo x"$1" |grep -q ^x$;then
+        say "$red Missing argument!"
+        exit 1
+    fi
+}
 
-# usage
-if [ -z "$1" ];then
-	echo
-	echo "No script parameter added!"
-	echo "One of followings is needed:"
-	echo
-	echo "	<source host>:<VM>:<lxc|lxd|kvm>"
-	echo
-	exit 1
-fi
+f_usage(){
+    echo "Usage:"
+    echo " $0 -s source [-c conffile] [--quiet|--debug] [--force]"
+    echo
+    echo "  -c|--conffile     <config file>"
+    echo "  -s|--source       <source host>:<VM>:<lxc|lxd|kvm>"
+    echo "  -q|--quiet"
+    echo "  --force"
+    echo "  --debug"
+    echo
+    exit 1
+}
 
 
-# whether it's a short or long parameter for the source?
-if echo "$1" | grep -q : ;
+# Exit if no arguments!
+let $# || { f_usage; exit 1; }
+
+while [ "$#" -gt "0" ]; do
+  case "$1" in
+    -c|--conf)
+        PARAM=$2
+        f_check_switch_param $PARAM
+        conffile=$PARAM
+        shift 2
+    ;;
+
+    -s|--source)
+        PARAM=$2
+        f_check_switch_param $PARAM
+        sourcedef=$PARAM
+        shift 2
+     ;;
+
+	 --force)
+		norollback=""
+		shift 1
+	 ;;
+
+	-q|--quiet)
+		quiet=1
+		shift 1
+    ;;
+
+	--debug)
+	    debug=1
+		shift 1
+	;;
+
+	*)
+		f_usage
+	;;
+   esac
+done
+
+
+# syncoid args debug and quiet should be mutually exclusive
+if [ "$quiet" -eq 1 ];
 	then
-		if echo "$1" | egrep -q "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
+       syncoid_args="--quiet"
+fi
+
+if [ "$debug" -eq 1 ];
+	then
+       syncoid_args="--debug"
+fi
+
+# is the source a long or short paramater?
+if echo "$sourcedef" | grep -q : ;
+	then
+		if echo "$sourcedef" | egrep -q "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
 			then
 				full_conf_entry=1
 			else
@@ -64,7 +122,7 @@ if echo "$1" | grep -q : ;
 		fi
 
 	else
-		if echo "$1" | egrep "[A-Za-z0-9][A-Za-z0-9-]+"
+		if echo "$sourcedef" | egrep -q "[A-Za-z0-9][A-Za-z0-9-]+"
 			then
 				full_conf_entry=0
 			else
@@ -77,9 +135,9 @@ fi
 # is the matching pattern unique?
 if [ "$full_conf_entry" -eq 0 ];
 	then
-		same_entries_in_config=`awk -F: '/'":$1"':/ { print $1":"$2":"$3 }' "$conffile" | wc -l`
+		same_entries_in_config=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile" | wc -l`
 	else
-		same_entries_in_config=`grep -c "$1" "$conffile"`
+		same_entries_in_config=`grep -c "$sourcedef" "$conffile"`
 fi
 if ! [ "$same_entries_in_config" -eq 1 ];
 	then
@@ -88,24 +146,24 @@ if ! [ "$same_entries_in_config" -eq 1 ];
 fi
 
 
-# if it's not a full definition, rerun the script with that
+# if it's not a full (short) line definition, rerun the script with the full one
 if [ $full_conf_entry -eq 0 ];
 	then
-		conf_entry=`awk -F: '/'":$1"':/ { print $1":"$2":"$3 }' $conffile`
-		$0 $conf_entry
+		conf_entry=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' $conffile`
+		$0 -s $conf_entry
 		exit $?
 fi
 
 
-# if it's a full definition, we need to do nothing special
+# if it's a full (long) line definition, we need to do nothing special
 if [ $full_conf_entry -eq 1 ];
 	then
-		s_host=`echo "$1" | cut -f1 -d:`
-		vm=`echo "$1" | cut -f2 -d:`
-		virttype=`echo "$1" | cut -f3 -d:`
+		s_host=`echo "$sourcedef" | cut -f1 -d:`
+		vm=`echo "$sourcedef" | cut -f2 -d:`
+		virttype=`echo "$sourcedef" | cut -f3 -d:`
 		if [ "$virttype" = "lxd" ];
 			then
-				zfs_path=lxd/containers
+				zfs_path="lxd/containers"
 
 			else zfs_path="$virttype"
 		fi
@@ -120,24 +178,12 @@ fi
 
 
 f_zrep(){
-	if [ -z "$1" ];then
-		echo "No VM defined"
-		exit 1
+	if [ -z "$sourcedef" ];
+		then
+			say "$red No VM defined"
+			exit 1
 	fi
 
-	# create destination zfs path recursively
-	if ! zfs list -o name "tank/$zrepds/$virttype/$s_host" > /dev/null 2>&1;
-		then
-			zfs create "tank/$zrepds/$virttype/$s_host"
-			#zfs create tank/zrep/$virttype/$s_host/$vm
-		#else
-		#	if ! zfs list -o name tank/zrep/$virttype/$s_host/$vm > /dev/null 2>&1;
-		#		then
-		#			zfs create tank/zrep/$virttype/$s_host/$vm
-		#	fi
-	fi
-	# can be readded with criu 1.9+
-	#ssh $s_host lxc snapshot $vm zas_${date}
 	if [ "$virttype" = "lxd" ];
 		then
 			ssh syncoid@"$s_host" "lxc snapshot $vm zas-${date}"
@@ -145,7 +191,7 @@ f_zrep(){
 			ssh syncoid@"$s_host" "zfs snapshot -r tank/$virttype/$vm@zas-${date}"
 	fi
 
-	syncoid -r $ssh_opts $args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$virttype/$s_host/$vm"
+	syncoid -r $norollback $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 
