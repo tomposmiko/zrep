@@ -40,7 +40,6 @@ conffile="$confdir/zrep.conf"
 zrepds="zrep"
 custom_zrepds=""
 syncoid_args=""
-norollback="--no-rollback"
 quiet="0"
 debug="0"
 sourceparam=""
@@ -85,11 +84,6 @@ while [ "$#" -gt "0" ]; do
         to_list=1
         sourceparam="$PARAM"
         shift 2
-     ;;
-
-     --force)
-        norollback=""
-        shift 1
      ;;
 
     -q|--quiet)
@@ -231,7 +225,7 @@ f_zrep(){
             ssh "syncoid@$s_host" zfs snapshot -r tank/"$virttype"/"$vm"@zas-"${date}"
     fi
 
-    syncoid -r "$norollback" $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+    syncoid -r $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 if [ "$to_list" -eq 1 ];
