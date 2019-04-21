@@ -34,19 +34,17 @@ f_check_switch_param(){
     fi
 }
 
-
 date=`date +"%Y-%m-%d--%H"`
-
 confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 zrepds="zrep"
+custom_zrepds=""
 syncoid_args=""
 norollback="--no-rollback"
 quiet="0"
 debug="0"
-sourcedef=""
+sourceparam=""
 to_list=0
-
 
 f_usage(){
     echo "Usage:"
@@ -77,7 +75,7 @@ while [ "$#" -gt "0" ]; do
     -s|--source)
         PARAM="$2"
         f_check_switch_param "$PARAM"
-        sourcedef="$PARAM"
+        sourceparam="$PARAM"
         shift 2
      ;;
 
@@ -85,7 +83,7 @@ while [ "$#" -gt "0" ]; do
         PARAM="$2"
         f_check_switch_param "$PARAM"
         to_list=1
-        sourcedef="$PARAM"
+        sourceparam="$PARAM"
         shift 2
      ;;
 
@@ -110,7 +108,6 @@ while [ "$#" -gt "0" ]; do
    esac
 done
 
-
 # syncoid args debug and quiet should be mutually exclusive
 if [ "$quiet" -eq 1 ];
     then
@@ -123,62 +120,81 @@ if [ "$debug" -eq 1 ];
 fi
 
 # is the source a long or short paramater?
-if echo "$sourcedef" | grep -q : ;
+if echo "$sourceparam" | grep -q ":" ;
     then
-        if echo "$sourcedef" | grep -E -q "[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)";
+        if echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)"$;
             then
                 full_conf_entry=1
-            else
-                echo "Wrong backup config!"
+        elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm):[A-Za-z0-9][A-Za-z0-9-]+"$
+			then
+				full_conf_entry=2
+			else
+                echo "Wrong source parameter!"
                 exit 1
         fi
 
     else
-        if echo "$sourcedef" | grep -E -q "[A-Za-z0-9][A-Za-z0-9-]+"
+        if echo "$sourceparam" | grep -E -q "[A-Za-z0-9][A-Za-z0-9-]+"
             then
                 full_conf_entry=0
             else
-                echo "Wrong backup config!"
+                echo "Wrong source parameter!"
                 exit 1
         fi
 fi
 
+case "$full_conf_entry" in
+	2)
+		same_entries_in_config=`cat $conffile | grep -v ^\# | grep -c "$sourceparam"`
+		if [ "$same_entries_in_config" -eq 1 ];
+    		then
+				sourcedef="$sourceparam"
+			else
+        		echo "Exactly one source entry must exist: $same_entries_in_config found."
+        		exit 1
+		fi
+	;;
 
-# is the matching pattern unique?
-if [ "$full_conf_entry" -eq 0 ];
+	1)
+		same_entries_in_config=`cat $conffile | grep -v ^\# | grep -c "$sourceparam"`
+		if [ "$same_entries_in_config" -eq 1 ];
+    		then
+				sourcedef="$sourceparam"
+			else
+        		echo "Exactly one source entry must exist: $same_entries_in_config found."
+        		exit 1
+		fi
+	;;
+
+	0)
+        #same_entries_in_config=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile" | wc -l`
+		same_entries_in_config=`cat $conffile | grep -v ^\# | grep -c ":${sourceparam}:"`
+		if [ "$same_entries_in_config" -eq 1 ];
+    		then
+				sourcedef=`grep :${sourceparam}: "$conffile"`
+			else
+        		echo "Exactly one source entry must exist: $same_entries_in_config found."
+        		exit 1
+		fi
+	;;
+esac
+
+s_host=`echo "$sourcedef" | cut -f1 -d:`
+vm=`echo "$sourcedef" | cut -f2 -d:`
+virttype=`echo "$sourcedef" | cut -f3 -d:`
+custom_zrepds=`echo "$sourcedef" | cut -f4 -d:`
+
+if ! [ -z "$custom_zrepds" ];
+	then
+		zrepds="$custom_zrepds"
+fi
+
+if [ "$virttype" = "lxd" ];
     then
-        same_entries_in_config=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile" | wc -l`
+        zfs_path="lxd/containers"
+
     else
-        same_entries_in_config=`grep -c "$sourcedef" "$conffile"`
-fi
-if ! [ "$same_entries_in_config" -eq 1 ];
-    then
-        echo "Exactly one source entry must exist. Currently $same_entries_in_config found."
-        exit 1
-fi
-
-
-# if it's not a full (short) line definition, rerun the script with the full one
-if [ "$full_conf_entry" -eq 0 ];
-    then
-        conf_entry=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile"`
-        "$0" -s "$conf_entry"
-        exit $?
-fi
-
-
-# if it's a full (long) line definition, we need to do nothing special
-if [ $full_conf_entry -eq 1 ];
-    then
-        s_host=`echo "$sourcedef" | cut -f1 -d:`
-        vm=`echo "$sourcedef" | cut -f2 -d:`
-        virttype=`echo "$sourcedef" | cut -f3 -d:`
-        if [ "$virttype" = "lxd" ];
-            then
-                zfs_path="lxd/containers"
-
-            else zfs_path="$virttype"
-        fi
+	    zfs_path="$virttype"
 fi
 
 # ssh tuning
@@ -215,7 +231,7 @@ f_zrep(){
             ssh "syncoid@$s_host" zfs snapshot -r tank/"$virttype"/"$vm"@zas-"${date}"
     fi
 
-    syncoid -r "$norollback" "$ssh_opts" "$syncoid_args" syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+    syncoid -r "$norollback" $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 if [ "$to_list" -eq 1 ];
