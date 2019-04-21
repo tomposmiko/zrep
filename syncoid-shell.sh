@@ -41,7 +41,8 @@ if echo "$@" |grep -q -E "^sudo zfs snapshot '[A-Za-Z0-9/-]+'@syncoid_[A-Za-Z0-9
 fi
 
 # syncoid meta snapshot format: <filesystem>@syncoid_<hostname>_YYYY-mm-dd:HH:mm:ss
-if echo "$@" |grep -q -E "^sudo zfs destroy '[A-Za-Z0-9/-]+'@syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}$" ; then
+#if echo "$@" |grep -q -E "^sudo zfs destroy '[A-Za-Z0-9/-]+'@syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}$" ; then
+if echo "$@" | grep -q -E "^(sudo zfs destroy '[A-Za-Z0-9/-]+'@syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}(\; )?)+" ; then
     eval $@
     exit $?
 fi
