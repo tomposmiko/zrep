@@ -1,2 +1,5 @@
+# goes to tank/zrep
 vhostA:vm1:lxc
 vhostB:vm2:kvm
+# goes to tank/external
+chostC:vm3:lxd:external
