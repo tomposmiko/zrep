@@ -83,7 +83,7 @@ fi
 echo "BEGIN: `date "+%Y-%m-%d %H:%M:%S"`"
 for i in `grep -v ^\# "$conffile"`;do
 	echo "==== "$i" ===="
-	zrep.sh --quiet -s "$i"
+	zrep.sh --quiet -s "$i" -c "$conffile"
 done
 
 echo "END: `date "+%Y-%m-%d %H:%M:%S"`"
