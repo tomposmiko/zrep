@@ -213,7 +213,7 @@ f_list(){
     fi
 
     zfs list -t all -r "tank/$zrepds/$vm"
-    exit 0
+    exit $?
 }
 
 
