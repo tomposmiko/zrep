@@ -52,10 +52,17 @@ if echo "$@" |grep -q -E "^sudo zfs snapshot -r [A-Za-z0-9/-]+@zas-20[0-9-]{12}$
     exit $?
 fi
 
-if echo "$@" |grep -q -E "^sudo zfs send  -I '[A-Za-z0-9/-]+'@'syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}' '[A-Za-z0-9/-]+'@'syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}'( \| lzop)?(  \| mbuffer  -q -s 128k -m 16M 2>/dev/null)?" ; then
+if echo "$@" |grep -q -E "^sudo zfs send  -I '[A-Za-z0-9/-]+'@'syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}' '[A-Za-z0-9/-]+'@'syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}'( \| lzop)?(  \| mbuffer  -q -s 128k -m 16M 2>/dev/null)?$" ; then
     eval $@
     exit $?
 fi
+
+# INFO: Sending oldest full snapshot <filesystem> to new target filesystem:
+if echo "$@" |grep -q -E "^sudo zfs send  '[A-Za-z0-9/-]+'@'(snapshot)?-zas-20[0-9:-]{17}'( \| lzop)?(  \| mbuffer  -q -s 128k -m 16M 2>/dev/null)?$" ; then
+    eval $@
+    exit $?
+fi
+
 
 # lxd
 if echo "$@" |grep -q -E "^lxc snapshot [A-Za-z0-9/-]+ zas-20[0-9-]+$" ; then
