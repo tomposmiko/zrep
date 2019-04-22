@@ -24,7 +24,7 @@ if echo "$@" |grep -q -E "^sudo zfs list -o name,origin -t filesystem,volume -Hr
     exit $?
 fi
 
-if echo "$@" |grep -q -E "sudo zfs get -H syncoid:sync '[A-Za-Z0-9/-]+'$" ; then
+if echo "$@" |grep -q -E "^sudo zfs get -H syncoid:sync '[A-Za-Z0-9/-]+'$" ; then
     eval $@
     exit $?
 fi
@@ -47,8 +47,7 @@ if echo "$@" | grep -q -E "^(sudo zfs destroy '[A-Za-Z0-9/-]+'@syncoid_[A-Za-Z0-
     exit $?
 fi
 
-# sudo zfs snapshot 'tank/lxd/containers/signer'@syncoid_backup11_2019-04-21:19:58:32
-if echo "$@" |grep -q -E "sudo zfs snapshot '[A-Za-Z0-9/-]+'@'syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}$" ; then
+if echo "$@" |grep -q -E "^sudo zfs snapshot -r [A-Za-Z0-9/-]+@zas-20[0-9-]{14}$" ; then
     eval $@
     exit $?
 fi
@@ -71,8 +70,7 @@ if echo "$@" |grep -q -E "^zfs snapshot -r [A-Za-Z0-9/-]+@zas-20[0-9-]+$" ; then
 fi
 
 if [ "$@" ]; then
-    echoerr "!!! WARNING !!!"
-    echoerr "!!! UNKNWON zrep command sent to remote !!!"
+    echoerr "!!! WARNING !!! UNKNOWN zrep command sent to remote !!!"
     echoerr "command: $@"
     exit 1
 fi
