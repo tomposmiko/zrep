@@ -47,12 +47,12 @@ if echo "$@" | grep -q -E "^(sudo zfs destroy '[A-Za-Z0-9/-]+'@syncoid_[A-Za-Z0-
     exit $?
 fi
 
-if echo "$@" |grep -q -E "^sudo zfs snapshot -r [A-Za-Z0-9/-]+@zas-20[0-9-]{14}$" ; then
+if echo "$@" |grep -q -E "^sudo zfs snapshot -r [A-Za-Z0-9/-]+@zas-20[0-9-]{12}$" ; then
     eval $@
     exit $?
 fi
 
-if echo "$@" |grep -q -E "^sudo zfs send -I '[A-Za-Z0-9/-]+'@'syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}' '[A-Za-Z0-9/-]+'@'syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}' | lzop | mbuffer -q -s 128k -m 16M 2>/dev/null$" ; then
+if echo "$@" |grep -q -E "^sudo zfs send  -I '[A-Za-Z0-9/-]+'@'syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}' '[A-Za-Z0-9/-]+'@'syncoid_[A-Za-Z0-9/.-]+_20[0-9:-]{17}'( \| lzop)?(  \| mbuffer  -q -s 128k -m 16M 2>/dev/null)?" ; then
     eval $@
     exit $?
 fi
@@ -72,7 +72,7 @@ fi
 if [ "$@" ]; then
     echoerr "!!! WARNING !!! UNKNOWN zrep command sent to remote !!!"
     echoerr "command: $@"
-    exit 1
 fi
 
+exit 1
 #eval $@
