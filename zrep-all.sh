@@ -44,12 +44,14 @@ quiet="0"
 debug="0"
 sourceparam=""
 to_list=0
+extended_vault=""
 
 f_usage(){
     echo "Usage:"
     echo " $0 [-c conffile]"
     echo
     echo "  -c|--conffile     <config file>"
+    echo "  -E|--extended-vault       relay --extended-vault setting"
     echo
     exit 1
 }
@@ -67,6 +69,12 @@ while [ "$#" -gt "0" ]; do
         shift 2
     ;;
 
+	-E|--extended-vault)
+        extended_vault="-E"
+        shift 1
+    ;;
+
+
     *)
         f_usage
     ;;
@@ -83,7 +91,7 @@ fi
 echo "BEGIN: `date "+%Y-%m-%d %H:%M:%S"`"
 for i in `grep -v ^\# "$conffile"`;do
 	echo "==== "$i" ===="
-	zrep.sh --quiet -s "$i" -c "$conffile"
+	zrep.sh --quiet -s "$i" -c "$conffile" $extended_vault
 done
 
 echo "END: `date "+%Y-%m-%d %H:%M:%S"`"
