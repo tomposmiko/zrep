@@ -38,12 +38,13 @@ date=`date +"%Y-%m-%d--%H"`
 confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 zrepds="zrep"
-custom_zrepds=""
+custom_vault=""
 syncoid_args=""
 quiet="0"
 debug="0"
 sourceparam=""
 to_list=0
+extended_vault=0
 
 f_usage(){
     echo "Usage:"
@@ -52,6 +53,7 @@ f_usage(){
     echo "  -c|--conffile     <config file>"
     echo "  -s|--source       <source host>:<VM>:<lxc|lxd|kvm>"
     echo "  -q|--quiet"
+    echo "  -E|--extended-vault"
     echo "  --force"
     echo "  --debug"
     echo
@@ -76,6 +78,11 @@ while [ "$#" -gt "0" ]; do
         f_check_switch_param "$PARAM"
         sourceparam="$PARAM"
         shift 2
+     ;;
+
+    -E|--extended-vault)
+		extended_vault=1
+        shift 1
      ;;
 
     -l|--list)
@@ -176,11 +183,22 @@ esac
 s_host=`echo "$sourcedef" | cut -f1 -d:`
 vm=`echo "$sourcedef" | cut -f2 -d:`
 virttype=`echo "$sourcedef" | cut -f3 -d:`
-custom_zrepds=`echo "$sourcedef" | cut -f4 -d:`
+custom_vault=`echo "$sourcedef" | cut -f4 -d:`
 
-if ! [ -z "$custom_zrepds" ];
+if ! [ -z "$custom_vault" ];
 	then
-		zrepds="$custom_zrepds"
+		zrepds="$custom_vault"
+fi
+
+if [ "$extended_vault" -eq 1 ];
+	then
+		zrepds="$zrepds"/"$s_host"
+		ds_type=`zfs get type -H -o value $zrepds 2> /dev/null`
+		if  ! [ "$ds_type" == "filesystem" ];
+			then
+				say "$green" "Createing destination vault: $zrepds"
+				zfs create $zrepds || say "$red" "Cannot create vault: ${zrepds}!"
+		fi
 fi
 
 if [ "$virttype" = "lxd" ];
@@ -209,7 +227,6 @@ f_list(){
     zfs list -t all -r "tank/$zrepds/$vm"
     exit $?
 }
-
 
 f_zrep(){
     if [ -z "$sourcedef" ];
