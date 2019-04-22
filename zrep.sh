@@ -193,11 +193,11 @@ fi
 if [ "$extended_vault" -eq 1 ];
 	then
 		zrepds="$zrepds"/"$s_host"
-		ds_type=`zfs get type -H -o value $zrepds 2> /dev/null`
+		ds_type=`zfs get type -H -o value tank/$zrepds 2> /dev/null`
 		if  ! [ "$ds_type" == "filesystem" ];
 			then
-				say "$green" "Createing destination vault: $zrepds"
-				zfs create $zrepds || say "$red" "Cannot create vault: ${zrepds}!"
+				say "$green" "Creating destination vault: tank/$zrepds"
+				zfs create tank/$zrepds || say "$red" "Cannot create vault: ${zrepds}!"
 		fi
 fi
 
