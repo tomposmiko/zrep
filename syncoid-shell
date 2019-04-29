@@ -91,6 +91,11 @@ if echo "$@" |grep -q -E "^command -v (lzop|mbuffer)$" ; then
     exit $?
 fi
 
+if echo "$@" |grep -q -E "zpool get -o value -H feature\@extensible_dataset" ; then
+    eval $@
+    exit $?
+fi
+
 if [ "$@" ]; then
     echoerr "!!! WARNING !!! UNKNOWN zrep command sent to remote !!!"
     echoerr "command: $@"
