@@ -86,6 +86,11 @@ if echo "$@" |grep -q -E "^zfs snapshot -r [A-Za-z0-9/-]+@zas-20[0-9-]+$" ; then
     exit $?
 fi
 
+if echo "$@" |grep -q -E "^command -v (lzop|mbuffer)$" ; then
+    eval $@
+    exit $?
+fi
+
 if [ "$@" ]; then
     echoerr "!!! WARNING !!! UNKNOWN zrep command sent to remote !!!"
     echoerr "command: $@"
