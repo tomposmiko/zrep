@@ -91,7 +91,7 @@ if echo "$@" |grep -q -E "^command -v (lzop|mbuffer)$" ; then
     exit $?
 fi
 
-if echo "$@" |grep -q -E "^zpool get -o value -H feature\@extensible_dataset" ; then
+if echo "$@" |grep -q -E "^zpool get -o value -H feature\@extensible_dataset '[A-Za-z-]+'" ; then
     eval $@
     exit $?
 fi
