@@ -106,7 +106,7 @@ if echo "$@" |grep -q -E "^zpool get -o value -H feature\@extensible_dataset '[A
     exit $?
 fi
 
-logger -s "ERROR: $@"
+logger -s "UNKNOWN COMMAND: $@"
 
 exit 1
 #eval $@
