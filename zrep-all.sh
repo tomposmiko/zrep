@@ -88,10 +88,11 @@ if ! [ "$conffile" ]; then
 fi
 
 
-echo "BEGIN: `date "+%Y-%m-%d %H:%M:%S"`"
+echo "BEGIN: `date "+%Y-%m-%d %H:%M"`"
 for i in `grep -v ^\# "$conffile"`;do
-	echo "==== "$i" ===="
-	zrep.sh --quiet -s "$i" -c "$conffile" $extended_vault
+    DATE=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "${DATE} - $i"
+    zrep.sh --quiet -s "$i" -c "$conffile" $extended_vault
 done
 
-echo "END: `date "+%Y-%m-%d %H:%M:%S"`"
+echo "END: `date "+%Y-%m-%d %H:%M"`"
