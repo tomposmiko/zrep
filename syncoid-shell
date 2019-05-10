@@ -106,9 +106,9 @@ if echo "$@" |grep -q -E "^zpool get -o value -H feature@extensible_dataset '[A-
     exit $?
 fi
 
-if echo "$@" |grep -q -E "^sudo rsync --server --sender -vlHogDtpre.iLsfxC --numeric-ids --inplace . /[A-Za-z0-9/\.-]+$" ; then
+if echo "$@" |grep -q -E "^rsync --server --sender -vlHogDtpre.iLsfxC --numeric-ids --inplace . /[A-Za-z0-9/\.-]+$" ; then
     logger "$@"
-    eval "$@"
+    eval "sudo $@"
     exit $?
 fi
 
