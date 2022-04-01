@@ -1,0 +1,5 @@
+#show_allowed
+#show_terse_denied
+show_denied
+help_text
+Sorry. Only these commands are available to you.

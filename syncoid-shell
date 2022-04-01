@@ -4,112 +4,112 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 
 if [ "$1" == "-c" ] ; then
-    shift
+  shift
 fi
 
 if [ "$1" == "exit" ] ; then
-    eval "$@"
+  eval "$@"
 fi
 
 if [ "$1" == "echo -n" ] ; then
-    eval "$@"
-    exit $?
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^sudo zfs list -o name,origin -t filesystem,volume -Hr '[A-Za-z0-9/-]+'$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^sudo zfs get -H syncoid:sync '[A-Za-z0-9/-]+'$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^sudo zfs get -Hpd 1 -t snapshot guid,creation '[A-Za-z0-9/-]+'$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 # syncoid meta snapshot format: <filesystem>@syncoid_<hostname>_YYYY-mm-dd:HH:mm:ss
 if echo "$@" |grep -q -E "^sudo zfs snapshot '[A-Za-z0-9/-]+'@syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 # syncoid meta snapshot format: <filesystem>@syncoid_<hostname>_YYYY-mm-dd:HH:mm:ss
 if echo "$@" | grep -q -E "^(sudo zfs destroy '[A-Za-z0-9/-]+'@syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}(\\; )?)+$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^sudo zfs snapshot -r [A-Za-z0-9/-]+@zas-20[0-9-]{12}$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^sudo zfs send (-nP)? -I '[A-Za-z0-9/-]+(')?@(')?syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}' '[A-Za-z0-9/-]+(')?@(')?syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}'( \\| lzop)?(  \\| mbuffer  -q -s 128k -m 16M 2>/dev/null)?$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 # INFO: Sending oldest full snapshot <filesystem snapshot> to new target filesystem:
 if echo "$@" |grep -q -E "^sudo zfs send  '[A-Za-z0-9/-]+'@'(snapshot-)?zas-20[0-9:-]{12}'( \\| lzop)?(  \\| mbuffer  -q -s 128k -m 16M 2>/dev/null)?$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 # INFO: Updating new target filesystem with incremental <filesystem snapshot> ... <syncoid helper snapshot>
 if echo "$@" |grep -q -E "^sudo zfs send  -I '[A-Za-z0-9/-]+'@'(snapshot-)?zas-20[0-9:-]{12}' '[A-Za-z0-9/-]+'@'syncoid_[A-Za-z0-9/.-]+_20[0-9:-]{17}'( \\| lzop)?(  \\| mbuffer  -q -s 128k -m 16M 2>/dev/null)?$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^sudo zfs send  '[A-Za-z0-9/-]+'@'[A-Za-z0-9/.-]+-20[0-9:-]{12}'( \\| lzop)?(  \\| mbuffer  -q -s 128k -m 16M 2>/dev/null)?$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 # lxd
 if echo "$@" |grep -q -E "^lxc snapshot [A-Za-z0-9/-]+ zas-20[0-9-]+$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 # kvm, lxc
 if echo "$@" |grep -q -E "^zfs snapshot -r [A-Za-z0-9/-]+@zas-20[0-9-]+$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^command -v (lzop|mbuffer)$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^zpool get -o value -H feature@extensible_dataset '[A-Za-z-]+'$" ; then
-    logger "$@"
-    eval "$@"
-    exit $?
+  logger "$@"
+  eval "$@"
+  exit $?
 fi
 
 if echo "$@" |grep -q -E "^rsync --server --sender -vlHogDtpre.iLsfxC --numeric-ids --inplace . [A-Za-z0-9/.-]+$" ; then
-    logger "$@"
-    eval "sudo $@"
-    exit $?
+  logger "$@"
+  eval "sudo $@"
+  exit $?
 fi
 
 logger -s "UNKNOWN COMMAND: $*"
