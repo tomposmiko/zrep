@@ -49,9 +49,7 @@ vmstat 1 100
     q
 }	
 # Allow `ls /tmp` or `ls '/tmp'`
-\:^ls '\?/tmp'\?$:{p;q}
 \:^exit$:{p;q}
-\:^ls /$:{p;q}
 \:^command -v mbuffer$:{p;q}
 \:^command -v lzop$:{p;q}
 \:^echo -n$:{p;q}
