@@ -65,3 +65,5 @@ vmstat 1 100
 \:^sudo zfs send -nP -I 'tank/lxd/containers/\([A-Za-z0-9-]*\)@syncoid_\([A-Za-z0-9-]*\)_\([0-9:-]*\)' 'tank/lxd/containers/\([A-Za-z0-9-]*\)@syncoid_\([A-Za-z0-9-]*\)_\([0-9:-]*\)'$:{p;q}
 \:^sudo zfs snapshot 'tank/lxd/containers/\([A-Za-z0-9-]*\)'@syncoid_\([A-Za-z0-9-]*\)_\([0-9:-]*\)$:{p;q}
 \:^zpool get -o value -H feature@extensible_dataset 'tank'$:{p;q}
+\:^sudo zfs send -t \([a-z0-9-]*\) | lzop | mbuffer -q -s 128k -m 16M 2>/dev/null$:{p;q}
+\:^sudo zfs send -nP -t \([a-z0-9-]*\)$:{p;q}
