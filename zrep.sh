@@ -237,12 +237,12 @@ f_zrep(){
 
     if [ "$virttype" = "lxd" ];
         then
-            ssh "syncoid@$s_host" lxc snapshot "$vm" zas-"${date}"
+            ssh "syncoid-backup@$s_host" lxc snapshot "$vm" zas-"${date}"
         else
-            ssh "syncoid@$s_host" sudo zfs snapshot -r tank/"$virttype"/"$vm"@zas-"${date}"
+            ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$virttype"/"$vm"@zas-"${date}"
     fi
 
-    syncoid -r $ssh_opts $syncoid_args syncoid@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+    syncoid -r $ssh_opts $syncoid_args syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 if [ "$to_list" -eq 1 ];
