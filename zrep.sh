@@ -214,7 +214,7 @@ fi
 cpu_aes=`grep -m1 -w -o aes /proc/cpuinfo`
 if [ x"$cpu_aes" == x"aes" ];
     then
-        ssh_opts="-c aes256-gcm@openssh.com"
+        ssh_opts=""
 fi
 
 f_list(){
