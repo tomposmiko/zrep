@@ -201,6 +201,12 @@ if [ "$extended_vault" -eq 1 ];
 		fi
 fi
 
+lsbdistcodename=$(lsb_release -c -s)
+if [ "$lsbdistcodename" = "bionic" ];
+  then
+    syncoid_args="$syncoid_args --no-command-checks"
+fi
+
 if [ "$virttype" = "lxd" ];
     then
         zfs_path="lxd/containers"
