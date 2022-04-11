@@ -204,7 +204,7 @@ fi
 lsbdistcodename=$(lsb_release -c -s)
 if [ "$lsbdistcodename" = "bionic" ];
   then
-    syncoid_args="$syncoid_args --no-command-checks"
+    syncoid_args="$syncoid_args --no-command-checks --no-resume"
 fi
 
 if [ "$virttype" = "lxd" ];
