@@ -29,15 +29,15 @@ fi
 export PATH="/root/bin:/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 dataset_list=$(mktemp /tmp/datasets.XXXXXX)
-zfs list -t snap -r -H tank -o name -s name tank/lxd/containers | grep @snapshot- | sed -e 's@tank/lxd/containers/@@' -e 's,@snapshot-,/,' > "$dataset_list"
+zfs list -t snap -r -H -o name -s name tank/zrep | tee "$dataset_list" > /dev/null
 
 for snap in "$@";do
   # ugly solution, should be written as recommended
   # shellcheck disable=SC2013
   for dataset_path in $(grep "$snap" "$dataset_list");do
-    say "$green lxc delete ${dataset_path}"
-    lxc delete "${dataset_path}"
+    say "$green zfs destroy ${dataset_path}"
+    zfs destroy "${dataset_path}"
   done
 done
 
-rm "${dataset_list}"
+rm i"${dataset_list}"
