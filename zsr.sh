@@ -40,4 +40,4 @@ for snap in "$@";do
   done
 done
 
-rm i"${dataset_list}"
+rm "${dataset_list}"
