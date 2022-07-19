@@ -1,5 +1,5 @@
-# goes to tank/zrep
-vhostA:vm1:lxc
-vhostB:vm2:kvm
-# goes to tank/external
-vhostC:vm3:lxd:external
+# into tank/zrep
+vhostA:vm1:lxd-ct
+vhostB:vm2:libvirt
+# into tank/external
+vhostC:vm3:lxd-ct:external

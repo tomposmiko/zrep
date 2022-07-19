@@ -51,7 +51,7 @@ f_usage(){
     echo " $0 -s source [-c conffile] [--quiet|--debug] [--force]"
     echo
     echo "  -c|--conffile     <config file>"
-    echo "  -s|--source       <source host>:<VM>:<lxc|lxd|kvm>"
+    echo "  -s|--source       <source host>:<VM>:<lxc|lxd-ct|libvirt>"
     echo "  -q|--quiet"
     echo "  -E|--extended-vault"
     echo "  --force"
@@ -123,10 +123,10 @@ fi
 # is the source a long or short paramater?
 if echo "$sourceparam" | grep -q ":" ;
     then
-        if echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm)"$;
+        if echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|libvirt)"$;
             then
                 full_conf_entry=1
-        elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd|kvm):[A-Za-z0-9][A-Za-z0-9-]+"$
+        elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|libvirt):[A-Za-z0-9][A-Za-z0-9-]+"$
 			then
 				full_conf_entry=2
 			else
@@ -207,12 +207,12 @@ if [ "$lsbdistcodename" = "bionic" ];
     syncoid_args="$syncoid_args --no-command-checks --no-resume"
 fi
 
-if [ "$virttype" = "lxd" ];
+if [ "$virttype" = "lxd-ct" ];
     then
         zfs_path="lxd/containers"
 
     else
-	    zfs_path="$virttype"
+	    zfs_path="kvm"
 fi
 
 # ssh tuning
@@ -241,11 +241,11 @@ f_zrep(){
             exit 1
     fi
 
-    if [ "$virttype" = "lxd" ];
+    if [ "$virttype" = "lxd-ct" ];
         then
             ssh "syncoid-backup@$s_host" lxc snapshot "$vm" zas-"${date}"
         else
-            ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$virttype"/"$vm"@zas-"${date}"
+            ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$zfs_path"/"$vm"@zas-"${date}"
     fi
 
     syncoid -r $ssh_opts $syncoid_args syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
