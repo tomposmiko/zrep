@@ -45,6 +45,7 @@ debug="0"
 sourceparam=""
 to_list=0
 extended_vault=0
+freq="daily"
 
 f_usage(){
     echo "Usage:"
@@ -52,6 +53,7 @@ f_usage(){
     echo
     echo "  -c|--conffile     <config file>"
     echo "  -s|--source       <source host>:<VM>:<lxc|lxd-ct|libvirt>"
+    echo "  -f|--freq         hourly|daily|weekly|monthly"
     echo "  -q|--quiet"
     echo "  -E|--extended-vault"
     echo "  --force"
@@ -77,6 +79,13 @@ while [ "$#" -gt "0" ]; do
         PARAM="$2"
         f_check_switch_param "$PARAM"
         sourceparam="$PARAM"
+        shift 2
+     ;;
+
+    -f|--freq)
+        PARAM="$2"
+        f_check_switch_param "$PARAM"
+        freq="$PARAM"
         shift 2
      ;;
 
@@ -118,6 +127,13 @@ fi
 if [ "$debug" -eq 1 ];
     then
        syncoid_args="--debug"
+fi
+
+# validate frequency possible param
+if ! [[ "$freq" =~ hourly|daily|weekly|monthly ]];
+  then
+    echo "Wrong frequency parameter!"
+    exit 1
 fi
 
 # is the source a long or short paramater?
@@ -243,9 +259,9 @@ f_zrep(){
 
     if [ "$virttype" = "lxd-ct" ];
         then
-            ssh "syncoid-backup@$s_host" lxc snapshot "$vm" zas-"${date}"
+            ssh "syncoid-backup@$s_host" lxc snapshot "$vm" zas-"${freq}-${date}"
         else
-            ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$zfs_path"/"$vm"@zas-"${date}"
+            ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$zfs_path"/"$vm"@zas-"${freq}-${date}"
     fi
 
     syncoid -r $ssh_opts $syncoid_args syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"

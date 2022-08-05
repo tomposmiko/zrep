@@ -45,6 +45,7 @@ debug="0"
 sourceparam=""
 to_list=0
 extended_vault=""
+freq="daily"
 
 f_usage(){
     echo "Usage:"
@@ -69,11 +70,16 @@ while [ "$#" -gt "0" ]; do
         shift 2
     ;;
 
-	-E|--extended-vault)
+   -E|--extended-vault)
         extended_vault="-E"
         shift 1
     ;;
 
+   -f|--freq)
+        PARAM=$2
+        freq="$PARAM"
+        shift 2
+    ;;
 
     *)
         f_usage
@@ -87,12 +93,18 @@ if ! [ "$conffile" ]; then
 	exit 1
 fi
 
+# validate frequency possible param
+if ! [[ "$freq" =~ hourly|daily|weekly|monthly ]];
+  then
+    echo "Wrong frequency parameter!"
+    exit 1
+fi
 
 echo "BEGIN: `date "+%Y-%m-%d %H:%M"`"
 for i in `grep -v ^\# "$conffile"`;do
     DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo "${DATE} - $i"
-    zrep.sh --quiet -s "$i" -c "$conffile" $extended_vault
+    zrep.sh --quiet -s "$i" -f "$freq" -c "$conffile" $extended_vault
 done
 
 echo "END: `date "+%Y-%m-%d %H:%M"`"
