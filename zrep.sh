@@ -223,13 +223,23 @@ if [ "$lsbdistcodename" = "bionic" ];
     syncoid_args="$syncoid_args --no-command-checks --no-resume"
 fi
 
-if [ "$virttype" = "lxd-ct" ];
-    then
-        zfs_path="lxd/containers"
+case "$virttype" in
+    lxd-ct)
+    zfs_path="lxd/containers"
+    ;;
 
-    else
-	    zfs_path="kvm"
-fi
+    libvirt)
+    zfs_path="kvm"
+    ;;
+
+    lxd-kvm)
+    zfs_path="lxd/virtual-machines"
+    ;;
+
+    *)
+    echo "Unknown virttype: ${virttype}!"
+    exit 1
+esac
 
 # ssh tuning
 # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/sect-Security_Guide-Encryption-OpenSSL_Intel_AES-NI_Engine.html
