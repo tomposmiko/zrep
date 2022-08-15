@@ -98,7 +98,7 @@ f_check_late(){
   if [ $debug_mode -eq 1 ];
     then
       echo "Last $freq time difference of $dataset: $time_difference"
-      f_slack_post "@channel Last $freq time difference of $dataset: $time_difference"
+      f_slack_post "Last $freq time difference of $dataset: $time_difference"
 
     else
       if [ "$time_difference" -le 0 ];
