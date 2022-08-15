@@ -97,8 +97,8 @@ f_check_late(){
   #echo "Last $freq epoch of $dataset: $snap_last_epoch"
   if [ $debug_mode -eq 1 ];
     then
-      echo "Last $freq time difference of $dataset: $time_difference"
-      f_slack_post "Last $freq time difference of $dataset: $time_difference"
+      echo "DEBUG: Last $freq time difference of $dataset: $time_difference"
+      f_slack_post "DEBUG: Last $freq time difference of $dataset: $time_difference"
 
     else
       if [ "$time_difference" -le 0 ];
