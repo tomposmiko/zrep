@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 # shellcheck disable=SC1091
 . /etc/zabbix/userparams/config
 
