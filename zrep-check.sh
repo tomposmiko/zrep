@@ -94,18 +94,17 @@ f_check_late(){
 #echo $[ $snap_last_epoch - $date_2_days_ago ]
 
 
-  #echo "Last $freq epoch of $dataset: $snap_last_epoch"
+  time_human=$(displaytime2 $time_difference)
   if [ $debug_mode -eq 1 ];
     then
-      echo "DEBUG: Last $freq time difference of $dataset: $time_difference"
-      f_slack_post "DEBUG: Last $freq time difference of $dataset: $time_difference"
+      echo "DEBUG: Time spent since ${freq} backup of ${dataset}: $time_human"
+      f_slack_post "DEBUG: Time spent since *${freq}* backup of *${dataset}*: *${time_human}*"
 
     else
       if [ "$time_difference" -le 0 ];
         then
-          time_human=$(displaytime2 $time_difference)
-          echo "Time spent since $freq backup of ${dataset}: $time_human"
-          f_slack_post "Time spent since $freq backup of ${dataset}: $time_human"
+          echo "Time spent since ${freq} backup of ${dataset}: $time_human"
+          f_slack_post "Time spent since *${freq}* backup of *${dataset}*: *${time_human}*"
       fi
   fi
 
