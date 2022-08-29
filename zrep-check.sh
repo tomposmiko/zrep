@@ -5,16 +5,17 @@ export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/
 # shellcheck disable=SC1091
 #. /etc/zabbix/userparams/config
 
-slack_url_post='https://slack.com/api/chat.postMessage'
+export slack_url_post='https://slack.com/api/chat.postMessage'
 # https://api.slack.com/authentication/oauth-v2
 #slack_token='<Bot User OAuth Token>'
 #slack_channel='<channel>'
+# shellcheck disable=SC1091
 . /etc/slack-notification.conf
 
 f_check_switch_param(){
   if echo x"$1" |grep -q ^x$;
    then
-     say "$red Missing argument!"
+     echo "Missing argument!"
      exit 1
   fi
 }
@@ -22,7 +23,7 @@ f_check_switch_param(){
 
 f_usage(){
   echo "Usage:"
-  echo " $0 -d|--daily <days> -w|--weekly <days> [ --debug ] [ --noop ]"
+  echo " $0 -d <days> -w <days> [ --debug ] [ --noop ]"
   echo " $0 -h|--help"
   echo
   echo "-d|--daily <days>      set the alert limit for the last daily snapshot"
@@ -72,13 +73,7 @@ date_today=$(date "+%Y-%m-%d")
 f_slack_post() {
   slack_text="$1"
   # shellcheck disable=SC2154
-  if [ -z "$debug_mode" ];
-    then
-      #curl -d "text=$slack_text" -d "channel=$slack_channel" -d "token=$slack_token" -s -X POST $slack_url_post > /dev/null
-      echo "$slack_text"
-    else
-      echo "$slack_text"
-  fi
+  curl -d "text=$slack_text" -d "channel=$slack_channel" -d "token=$slack_token" -s -X POST $slack_url_post > /dev/null
 }
 
 f_date_to_epoch () {
