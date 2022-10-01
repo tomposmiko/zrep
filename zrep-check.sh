@@ -24,10 +24,12 @@ f_check_switch_param(){
 f_usage(){
   echo "Usage:"
   echo " $0 -d <days> -w <days> [ --debug ] [ --noop ]"
+  echo " $0 --generate-debug-txt"
   echo " $0 -h|--help"
   echo
   echo "-d|--daily <days>      set the alert limit for the last daily snapshot"
   echo "-w|--weekly <days>     set the alert limit for the last weekly snapshot"
+  echo "--generate-debug-txt   generate /root/zrep-check-debug.txt for speed up debugging"
   exit 1
 }
 
@@ -57,6 +59,11 @@ while [ "$#" -gt "0" ]; do
 
     --debug)
       debug_mode=1
+      shift 1
+    ;;
+
+    --generate-debug-txt)
+      generate_debug_txt=1
       shift 1
     ;;
 
@@ -95,12 +102,20 @@ f_date_diff (){
 }
 
 
+if [ -n "$generate_debug_txt" ];
+  then
+    echo -n "Generating /root/zrep-check-debug.txt for debugging purposes... "
+    zfs list -t all -r tank/zrep -o name -H | grep -v "^tank/zrep$" | tee "/root/zrep-check-debug.txt" > /dev/null
+    echo "done."
+    exit 0
+fi
+
 if [ -z "$debug_mode" ];
   then
     snap_list_file=$(mktemp /tmp/snap_list_file.XXXX)
     zfs list -t all -r tank/zrep -o name -H | grep -v "^tank/zrep$" | tee "$snap_list_file" > /dev/null
   else
-    snap_list_file=a.txt
+    snap_list_file='/root/zrep-check-debug.txt'
 fi
 
 dataset_list=$(grep -v @ "$snap_list_file")
@@ -111,6 +126,19 @@ f_check_late(){
   days_limit="$3"
 
   snap_last_item=$(grep "${dataset}@" "$snap_list_file" | grep -o "zas-${freq}-.*" | tail -1)
+  if [ "$snap_last_item" = "" ];
+    then
+      msg="DEBUG: !!! WARNING !!!: $dataset has *NO VALID SNAPSHOT*!"
+      if [ -z "$debug_mode" ];
+        then
+          echo "$msg"
+          [[ -z "$noop_mode" ]] && f_slack_post "$msg"
+        else
+          echo "DEBUG: $msg"
+          [[ -z "$noop_mode" ]] && f_slack_post "DEBUG: $msg"
+      fi
+      return 0
+ fi
   date_last_snap=$(echo "$snap_last_item" | grep -o "202[0-9]-[0-9][0-9]-[0-9][0-9]")
   days_diff=$(f_date_diff -d "$date_last_snap" "$date_today")
 
@@ -128,12 +156,18 @@ f_check_late(){
   fi
 }
 
-for d in $dataset_list;do
-  f_check_late "$d" daily "$limit_daily";
-done
+if [ "$limit_daily" ];
+  then
+    for d in $dataset_list;do
+      f_check_late "$d" daily "$limit_daily";
+    done
+fi
 
-for d in $dataset_list;do
-  f_check_late "$d" weekly "$limit_weekly";
-done
+if [ "$limit_weekly" ];
+  then
+    for d in $dataset_list;do
+      f_check_late "$d" weekly "$limit_weekly";
+    done
+fi
 
 [[ -z "$debug_mode" ]] && rm -f "$snap_list_file"
