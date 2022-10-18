@@ -128,7 +128,7 @@ f_check_late(){
   snap_last_item=$(grep "${dataset}@" "$snap_list_file" | grep -o "zas-${freq}-.*" | tail -1)
   if [ "$snap_last_item" = "" ];
     then
-      msg="DEBUG: !!! WARNING !!!: *${dataset}* has *NO VALID SNAPSHOT*!"
+      msg="DEBUG: !!! WARNING !!!: *${dataset}* has *NO VALID '${freq}' SNAPSHOT*!"
       if [ -z "$debug_mode" ];
         then
           echo "$msg"
