@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2002
 
 export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -34,7 +35,7 @@ f_check_switch_param(){
     fi
 }
 
-date=`date +"%Y-%m-%d--%H"`
+date=$(date +"%Y-%m-%d--%H")
 confdir="/etc/zrep"
 conffile="$confdir/zrep.conf"
 zrepds="zrep"
@@ -64,7 +65,7 @@ f_usage(){
 
 
 # Exit if no arguments!
-let $# || { f_usage; exit 1; }
+(( $# )) || { f_usage; exit 1; }
 
 while [ "$#" -gt "0" ]; do
   case "$1" in
@@ -90,7 +91,7 @@ while [ "$#" -gt "0" ]; do
      ;;
 
     -E|--extended-vault)
-		extended_vault=1
+    extended_vault=1
         shift 1
      ;;
 
@@ -143,9 +144,9 @@ if echo "$sourceparam" | grep -q ":" ;
             then
                 full_conf_entry=1
         elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|libvirt):[A-Za-z0-9][A-Za-z0-9-]+"$
-			then
-				full_conf_entry=2
-			else
+      then
+        full_conf_entry=2
+      else
                 echo "Wrong source parameter!"
                 exit 1
         fi
@@ -161,60 +162,60 @@ if echo "$sourceparam" | grep -q ":" ;
 fi
 
 case "$full_conf_entry" in
-	2)
-		same_entries_in_config=`cat $conffile | grep -v ^\# | grep -c "$sourceparam"`
-		if [ "$same_entries_in_config" -eq 1 ];
-    		then
-				sourcedef="$sourceparam"
-			else
-        		echo "Exactly one source entry must exist: $same_entries_in_config found."
-        		exit 1
-		fi
-	;;
+  2)
+    same_entries_in_config=$(cat "$conffile" | grep -v ^\# | grep -c "$sourceparam")
+    if [ "$same_entries_in_config" -eq 1 ];
+        then
+        sourcedef="$sourceparam"
+      else
+            echo "Exactly one source entry must exist: $same_entries_in_config found."
+            exit 1
+    fi
+  ;;
 
-	1)
-		same_entries_in_config=`cat $conffile | grep -v ^\# | grep -c "$sourceparam"`
-		if [ "$same_entries_in_config" -eq 1 ];
-    		then
-				sourcedef="$sourceparam"
-			else
-        		echo "Exactly one source entry must exist: $same_entries_in_config found."
-        		exit 1
-		fi
-	;;
+  1)
+    same_entries_in_config=$(cat "$conffile" | grep -v ^\# | grep -c "$sourceparam")
+    if [ "$same_entries_in_config" -eq 1 ];
+        then
+        sourcedef="$sourceparam"
+      else
+            echo "Exactly one source entry must exist: $same_entries_in_config found."
+            exit 1
+    fi
+  ;;
 
-	0)
+  0)
         #same_entries_in_config=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile" | wc -l`
-		same_entries_in_config=`cat $conffile | grep -v ^\# | grep -c ":${sourceparam}:"`
-		if [ "$same_entries_in_config" -eq 1 ];
-    		then
-				sourcedef=`grep :${sourceparam}: "$conffile"`
-			else
-        		echo "Exactly one source entry must exist: $same_entries_in_config found."
-        		exit 1
-		fi
-	;;
+    same_entries_in_config=$(cat "$conffile" | grep -v ^\# | grep -c ":${sourceparam}:")
+    if [ "$same_entries_in_config" -eq 1 ];
+        then
+          sourcedef=$(grep ":${sourceparam}:" "$conffile")
+      else
+            echo "Exactly one source entry must exist: $same_entries_in_config found."
+            exit 1
+    fi
+  ;;
 esac
 
-s_host=`echo "$sourcedef" | cut -f1 -d:`
-vm=`echo "$sourcedef" | cut -f2 -d:`
-virttype=`echo "$sourcedef" | cut -f3 -d:`
-custom_vault=`echo "$sourcedef" | cut -f4 -d:`
+s_host=$(echo "$sourcedef" | cut -f1 -d:)
+vm=$(echo "$sourcedef" | cut -f2 -d:)
+virttype=$(echo "$sourcedef" | cut -f3 -d:)
+custom_vault=$(echo "$sourcedef" | cut -f4 -d:)
 
-if ! [ -z "$custom_vault" ];
-	then
-		zrepds="$custom_vault"
+if [ -n "$custom_vault" ];
+  then
+    zrepds="$custom_vault"
 fi
 
 if [ "$extended_vault" -eq 1 ];
-	then
-		zrepds="$zrepds"/"$s_host"
-		ds_type=`zfs get type -H -o value tank/$zrepds 2> /dev/null`
-		if  ! [ "$ds_type" == "filesystem" ];
-			then
-				say "$green" "Creating destination vault: tank/$zrepds"
-				zfs create tank/$zrepds || say "$red" "Cannot create vault: ${zrepds}!"
-		fi
+  then
+    zrepds="$zrepds"/"$s_host"
+    ds_type=$(zfs get type -H -o value "tank/$zrepds" 2> /dev/null)
+    if  ! [ "$ds_type" == "filesystem" ];
+      then
+        say "$green" "Creating destination vault: tank/$zrepds"
+        zfs create "tank/$zrepds" || say "$red" "Cannot create vault: ${zrepds}!"
+    fi
 fi
 
 lsbdistcodename=$(lsb_release -c -s)
@@ -243,8 +244,8 @@ esac
 
 # ssh tuning
 # https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/sect-Security_Guide-Encryption-OpenSSL_Intel_AES-NI_Engine.html
-cpu_aes=`grep -m1 -w -o aes /proc/cpuinfo`
-if [ x"$cpu_aes" == x"aes" ];
+cpu_aes=$(grep -m1 -w -o aes /proc/cpuinfo)
+if [ "$cpu_aes" == "aes" ];
     then
         ssh_opts=""
 fi
@@ -274,7 +275,8 @@ f_zrep(){
             ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$zfs_path"/"$vm"@zas-"${freq}-${date}"
     fi
 
-    syncoid -r $ssh_opts $syncoid_args syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+
+    syncoid -r "${ssh_opts[@]}" "${syncoid_args[@]}" syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 if [ "$to_list" -eq 1 ];
