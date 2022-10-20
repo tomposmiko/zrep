@@ -288,8 +288,8 @@ f_zrep(){
       ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$zfs_path"/"$vm"@zas-"${freq}-${date}"
   fi
 
-
-  syncoid -r "${ssh_opts[@]}" "${syncoid_args[@]}" syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+  # shellcheck disable=SC2068
+  syncoid -r ${ssh_opts[@]} ${syncoid_args[@]} syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
 }
 
 if [ "$to_list" -eq 1 ];
