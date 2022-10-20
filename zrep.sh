@@ -51,12 +51,14 @@ freq="daily"
 
 f_usage(){
   echo "Usage:"
-  echo " $0 -s source [-c conffile] [--quiet|--debug] [--force]"
+  echo " $0 -s source [-c conffile] [--bwlimit <limit>] [--quiet|--debug] [--force]"
   echo
   echo "  -c|--conffile     <config file>"
   echo "  -s|--source       <source host>:<VM>:<lxc|lxd-ct|libvirt>"
   echo "  -f|--freq         hourly|daily|weekly|monthly"
+  i
   echo "  -q|--quiet"
+  echo "  -b|--bwlimit      <limit k|m|g|t>"
   echo "  -E|--extended-vault"
   echo "  --force"
   echo "  --debug"
@@ -88,6 +90,13 @@ while [ "$#" -gt "0" ]; do
         PARAM="$2"
         f_check_switch_param "$PARAM"
         freq="$PARAM"
+        shift 2
+     ;;
+
+   -b|--bwlimit)
+        PARAM="$2"
+        f_check_switch_param "$PARAM"
+        bwlimit="$PARAM"
         shift 2
      ;;
 
@@ -123,12 +132,17 @@ done
 # syncoid args debug and quiet should be mutually exclusive
 if [ "$quiet" -eq 1 ];
   then
-    syncoid_args="--quiet"
+    syncoid_args="$syncoid_args --quiet"
 fi
 
 if [ "$debug" -eq 1 ];
   then
-    syncoid_args="--debug"
+    syncoid_args="$syncoid_args --debug"
+fi
+
+if [ -n "$bwlimit" ];
+  then
+    syncoid_args="$syncoid_args --target-bwlimit=${bwlimit}"
 fi
 
 # validate frequency possible param
