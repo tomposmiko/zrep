@@ -46,6 +46,7 @@ sourceparam=""
 to_list=0
 extended_vault=""
 freq="daily"
+conf_extra="/etc/zrep/zrep-all.conf"
 
 f_usage(){
     echo "Usage:"
@@ -101,7 +102,7 @@ if ! [[ "$freq" =~ hourly|daily|weekly|monthly ]];
 fi
 
 echo "BEGIN: `date "+%Y-%m-%d %H:%M"`"
-for i in `grep -v ^\# "$conffile"`;do
+for i in `grep -v ^\# "$conffile"`; do
     DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo "${DATE} - $i"
     zrep.sh --quiet -s "$i" -f "$freq" -c "$conffile" $extended_vault

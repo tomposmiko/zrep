@@ -54,7 +54,7 @@ f_usage(){
   echo " $0 -s source [-c conffile] [--bwlimit <limit>] [--quiet|--debug] [--force]"
   echo
   echo "  -c|--conffile     <config file>"
-  echo "  -s|--source       <source host>:<VM>:<lxc|lxd-ct|libvirt>"
+  echo "  -s|--source       <source host>:<VM>:<lxc|lxd-ct|lxd-kvm|libvirt>"
   echo "  -f|--freq         hourly|daily|weekly|monthly"
   i
   echo "  -q|--quiet"
@@ -155,10 +155,10 @@ fi
 # is the source a long or short paramater?
 if echo "$sourceparam" | grep -q ":" ;
   then
-    if echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|libvirt)"$;
+    if echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|lxd-kvm|libvirt)"$;
       then
         full_conf_entry=1
-      elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|libvirt):[A-Za-z0-9][A-Za-z0-9-]+"$; then
+      elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|lxd-kvm|libvirt):[A-Za-z0-9][A-Za-z0-9-]+"$; then
         full_conf_entry=2
       else
         echo "Wrong source parameter!"
@@ -281,7 +281,7 @@ f_zrep(){
       exit 1
   fi
 
-  if [ "$virttype" = "lxd-ct" ];
+  if [[ "$virttype" = "lxd-ct" || "$virttype" = "lxd-kvm" ]];
     then
       ssh "syncoid-backup@$s_host" lxc snapshot "$vm" zas-"${freq}-${date}"
     else
