@@ -1,300 +1,323 @@
 #!/bin/bash
 # shellcheck disable=SC2002
 
-export PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+set -euo pipefail
 
-if /usr/bin/tty > /dev/null;
-  then
-    export console=1
-    interactive=1
-  else
-    export console=0
-fi
+PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
-uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
-if [[ "$interactive" -eq 1 ]];
-  then
-    say() { echo -ne "$1";echo -e "$nocolor"; }
-    # Colors, yo!
-    export green="\e[1;32m"
-    export red="\e[1;31m"
-    export blue="\e[1;34m"
-    export purple="\e[1;35m"
-    export cyan="\e[1;36m"
-    export nocolor="\e[0m"
-  else
-    # do nothing
-    say() { true; }
-fi
+DATE=$(date +"%Y-%m-%d--%H")
 
-f_check_switch_param(){
-  if echo x"$1" |grep -q ^x$;
-    then
-      say "$red" "Missing argument!"
-      exit 1
-  fi
+ARGS_SYNCOID=()
+DATASET_ZREP="tank/zrep"
+DIR_CONFIG="/etc/zrep"
+HOST_IN_PATH=0
+FILE_CONFIG="$DIR_CONFIG/zrep.conf"
+FREQ="daily"
+LIST_SNAPSHOTS="false"
+PARAM_SOURCE=""
+SSH_OPTS=()
+
+f_check_arg() {
+    local arg="$1"
+    local comment="$2"
+
+    if [ -z "$comment" ];
+        then
+            local comment="UNKNOWN"
+    fi
+
+    if [ -z "$arg" ];
+        then
+            f_say_fail "${COLOR_RED}Missing argument: '${comment}'!"
+
+            exit 1
+    fi
 }
 
-date=$(date +"%Y-%m-%d--%H")
-confdir="/etc/zrep"
-conffile="$confdir/zrep.conf"
-zrepds="zrep"
-custom_vault=""
-syncoid_args=""
-quiet="0"
-debug="0"
-sourceparam=""
-to_list=0
-extended_vault=0
-freq="daily"
+f_check_interactive() {
+    if [ -t 0 ]
+        then
+            export INTERACTIVE="true"
+        else
+            export INTERACTIVE="false"
+    fi
+}
 
-f_usage(){
+f_list_snapshots() {
+    if [ "$LIST_SNAPSHOTS" == "true" ];
+        then
+            zfs list -t all -r "${DATASET_ZREP}/${VM_NAME}"
+
+            exit $?
+    fi
+}
+
+f_process_args() {
+    # Exit if no arguments
+    (( $# )) || f_usage
+
+    local param
+
+    while [ "$#" -gt "0" ]; do
+        case "$1" in
+            -c|--conf)
+                param=$2
+                f_check_arg "$param" "config file"
+                FILE_CONFIG="$param"
+                shift 2
+        ;;
+
+            -s|--source)
+                param="$2"
+                f_check_arg "$param" "source definition"
+                PARAM_SOURCE="$param"
+                shift 2
+        ;;
+
+            -f|--freq)
+                param="$2"
+                f_check_arg "$param" "frequency"
+                FREQ="$param"
+                shift 2
+         ;;
+
+            -b|--bwlimit)
+                param="$2"
+                f_check_arg "$param" "bandwidth limit"
+                ARGS_SYNCOID+=("--target-bwlimit=${param}")
+                shift 2
+         ;;
+
+            -E|--extended-vault)
+                HOST_IN_PATH=1
+                shift 1
+         ;;
+
+            -l|--list)
+                param="$2"
+                f_check_arg "$param" "source definition"
+                PARAM_SOURCE="$param"
+                LIST_SNAPSHOTS="true"
+                shift 2
+         ;;
+
+            -q|--quiet)
+                ARGS_SYNCOID+=("--quiet")
+                shift 1
+        ;;
+
+            --debug)
+                ARGS_SYNCOID+=("--debug")
+                shift 1
+        ;;
+
+            *)
+                f_usage
+        ;;
+        esac
+    done
+}
+
+f_process_source_row() {
+    local IFS
+
+    IFS=":"
+
+    # shellcheck disable=SC2086
+    set $FULL_SOURCE_ROW
+
+    SOURCE_HOST="$1"
+    VM_NAME="$2"
+    VIRT_TYPE="$3"
+}
+
+f_pull_snapshots() {
+    if [[ "$VIRT_TYPE" =~ lxd-* ]];
+        then
+            ssh "syncoid-backup@${SOURCE_HOST}" lxc snapshot "$VM_NAME" zas-"${FREQ}-${DATE}" || true
+        else
+            ssh "syncoid-backup@${SOURCE_HOST}" sudo zfs snapshot -r "${REMOTE_ZFS_PATH}/${VM_NAME}@zas-${FREQ}-${DATE}" || true
+    fi
+
+    syncoid -r "${SSH_OPTS[@]}" "${ARGS_SYNCOID[@]}" "syncoid-backup@${SOURCE_HOST}:${REMOTE_ZFS_PATH}/${VM_NAME}" "${DATASET_ZREP}/${VM_NAME}"
+}
+
+f_say_fail() {
+    f_check_arg "$1" "fail message"
+
+    echo -ne "${COLOR_RED}${1}"
+    echo -e "$COLOR_NO"
+
+    exit 1
+}
+
+f_say_info() {
+    f_check_arg "$1" "info message"
+
+    echo -ne "$1"
+    echo -e "$COLOR_NO"
+}
+
+f_set_colors() {
+    if [ "$INTERACTIVE" == "true" ];
+        then
+            export COLOR_BLUE="\e[1;34m"
+            export COLOR_CYAN="\e[1;36m"
+            export COLOR_GREEN="\e[1;32m"
+            export COLOR_PURPLE="\e[1;35m"
+            export COLOR_RED="\e[1;31m"
+            export COLOR_NO="\e[0m"
+        else
+            export COLOR_BLUE=""
+            export COLOR_CYAN=""
+            export COLOR_GREEN=""
+            export COLOR_PURPLE=""
+            export COLOR_RED=""
+            export COLOR_NO=""
+    fi
+
+}
+
+f_set_hostname_in_path() {
+    if [ "$HOST_IN_PATH" -eq 1 ];
+        then
+            DATASET_ZREP="${DATASET_ZREP}/${SOURCE_HOST}"
+
+            local dataset_type
+
+            dataset_type=$( zfs get type -H -o value "$DATASET_ZREP" 2> /dev/null || true )
+
+            if [ ! "$dataset_type" == "filesystem" ];
+                then
+                    f_say_info "${COLOR_GREEN}Creating destination path: ${DATASET_ZREP}"
+
+                    if ( ! zfs create "${DATASET_ZREP}" );
+                        then
+                            f_say_fail "${COLOR_RED}Cannot create path: ${DATASET_ZREP}!"
+                    fi
+            fi
+    fi
+}
+
+f_set_remote_zfs_path() {
+    case "$VIRT_TYPE" in
+        lxd-ct)
+            REMOTE_ZFS_PATH="lxd/containers"
+        ;;
+
+        libvirt)
+            REMOTE_ZFS_PATH="kvm"
+        ;;
+
+        lxd-kvm)
+            REMOTE_ZFS_PATH="lxd/virtual-machines"
+        ;;
+
+        *)
+            say "${COLOR_RED}Unknown VIRT_TYPE: ${VIRT_TYPE}"
+
+            exit 1
+    esac
+
+    export REMOTE_ZFS_PATH="tank/${REMOTE_ZFS_PATH}"
+}
+
+f_uncolorize() {
+    # https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
+    sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"
+}
+
+f_usage() {
   echo "Usage:"
-  echo " $0 -s source [-c conffile] [--bwlimit <limit>] [--quiet|--debug] [--force]"
+  echo "    $0 -s <source> [-c <config file>] [--bwlimit <limit>] [--quiet|--debug] [--force]"
   echo
-  echo "  -c|--conffile     <config file>"
-  echo "  -s|--source       <source host>:<VM>:<lxc|lxd-ct|lxd-kvm|libvirt>"
-  echo "  -f|--freq         hourly|daily|weekly|monthly"
-  i
-  echo "  -q|--quiet"
-  echo "  -b|--bwlimit      <limit k|m|g|t>"
-  echo "  -E|--extended-vault"
-  echo "  --force"
-  echo "  --debug"
+  echo "        -c                <config file>"
+  echo "        -s|--source       <source host>:<VM>:<lxc|lxd-ct|lxd-kvm|libvirt>"
+  echo "        -f|--freq         hourly|daily|weekly|monthly"
+  echo "        -b|--bwlimit      <limit k|m|g|t>"
+  echo "        -q|--quiet"
+  echo "        --debug"
+  echo "        --force"
   echo
+
   exit 1
 }
 
+f_validate_dataset_zrep() {
+    local dataset_type
 
-# Exit if no arguments!
-(( $# )) || { f_usage; exit 1; }
+    dataset_type=$( zfs get type -H -o value "$DATASET_ZREP" 2> /dev/null )
 
-while [ "$#" -gt "0" ]; do
-  case "$1" in
-    -c|--conf)
-        PARAM=$2
-        f_check_switch_param "$PARAM"
-        conffile="$PARAM"
-        shift 2
-    ;;
-
-    -s|--source)
-        PARAM="$2"
-        f_check_switch_param "$PARAM"
-        sourceparam="$PARAM"
-        shift 2
-     ;;
-
-    -f|--freq)
-        PARAM="$2"
-        f_check_switch_param "$PARAM"
-        freq="$PARAM"
-        shift 2
-     ;;
-
-   -b|--bwlimit)
-        PARAM="$2"
-        f_check_switch_param "$PARAM"
-        bwlimit="$PARAM"
-        shift 2
-     ;;
-
-    -E|--extended-vault)
-    extended_vault=1
-        shift 1
-     ;;
-
-    -l|--list)
-        PARAM="$2"
-        f_check_switch_param "$PARAM"
-        to_list=1
-        sourceparam="$PARAM"
-        shift 2
-     ;;
-
-    -q|--quiet)
-        quiet=1
-        shift 1
-    ;;
-
-    --debug)
-        debug=1
-        shift 1
-    ;;
-
-    *)
-        f_usage
-    ;;
-   esac
-done
-
-# syncoid args debug and quiet should be mutually exclusive
-if [ "$quiet" -eq 1 ];
-  then
-    syncoid_args="$syncoid_args --quiet"
-fi
-
-if [ "$debug" -eq 1 ];
-  then
-    syncoid_args="$syncoid_args --debug"
-fi
-
-if [ -n "$bwlimit" ];
-  then
-    syncoid_args="$syncoid_args --target-bwlimit=${bwlimit}"
-fi
-
-# validate frequency possible param
-if ! [[ "$freq" =~ hourly|daily|weekly|monthly ]];
-  then
-    echo "Wrong frequency parameter!"
-    exit 1
-fi
-
-# is the source a long or short paramater?
-if echo "$sourceparam" | grep -q ":" ;
-  then
-    if echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|lxd-kvm|libvirt)"$;
-      then
-        full_conf_entry=1
-      elif echo "$sourceparam" | grep -E -q ^"[A-Za-z0-9][\.A-Za-z0-9-]+:[A-Za-z0-9][A-Za-z0-9-]+:(lxc|lxd-ct|lxd-kvm|libvirt):[A-Za-z0-9][A-Za-z0-9-]+"$; then
-        full_conf_entry=2
-      else
-        echo "Wrong source parameter!"
-        exit 1
+    if [ ! "$dataset_type" == "filesystem" ];
+        then
+            f_say_fail "${COLOR_RED}Missing root dataset: ('$DATASET_ZREP')"
     fi
-  else
-    if echo "$sourceparam" | grep -E -q "[A-Za-z0-9][A-Za-z0-9-]+"
-      then
-        full_conf_entry=0
-      else
-        echo "Wrong source parameter!"
-        exit 1
-    fi
-fi
-
-case "$full_conf_entry" in
-  2)
-    same_entries_in_config=$(cat "$conffile" | grep -v ^\# | grep -c "$sourceparam")
-    if [ "$same_entries_in_config" -eq 1 ];
-      then
-        sourcedef="$sourceparam"
-      else
-        echo "Exactly one source entry must exist: $same_entries_in_config found."
-        exit 1
-    fi
-  ;;
-
-  1)
-    same_entries_in_config=$(cat "$conffile" | grep -v ^\# | grep -c "$sourceparam")
-    if [ "$same_entries_in_config" -eq 1 ];
-      then
-        sourcedef="$sourceparam"
-      else
-        echo "Exactly one source entry must exist: $same_entries_in_config found."
-        exit 1
-    fi
-  ;;
-
-  0)
-        #same_entries_in_config=`awk -F: '/'":$sourcedef"':/ { print $1":"$2":"$3 }' "$conffile" | wc -l`
-    same_entries_in_config=$(cat "$conffile" | grep -v ^\# | grep -c ":${sourceparam}:")
-    if [ "$same_entries_in_config" -eq 1 ];
-      then
-          sourcedef=$(grep ":${sourceparam}:" "$conffile")
-      else
-        echo "Exactly one source entry must exist: $same_entries_in_config found."
-        exit 1
-    fi
-  ;;
-esac
-
-s_host=$(echo "$sourcedef" | cut -f1 -d:)
-vm=$(echo "$sourcedef" | cut -f2 -d:)
-virttype=$(echo "$sourcedef" | cut -f3 -d:)
-custom_vault=$(echo "$sourcedef" | cut -f4 -d:)
-
-if [ -n "$custom_vault" ];
-  then
-    zrepds="$custom_vault"
-fi
-
-if [ "$extended_vault" -eq 1 ];
-  then
-    zrepds="$zrepds"/"$s_host"
-    ds_type=$(zfs get type -H -o value "tank/$zrepds" 2> /dev/null)
-    if  ! [ "$ds_type" == "filesystem" ];
-      then
-        say "$green" "Creating destination vault: tank/$zrepds"
-        zfs create "tank/$zrepds" || say "$red" "Cannot create vault: ${zrepds}!"
-    fi
-fi
-
-lsbdistcodename=$(lsb_release -c -s)
-if [ "$lsbdistcodename" = "bionic" ];
-  then
-    syncoid_args="$syncoid_args --no-command-checks --no-resume"
-fi
-
-case "$virttype" in
-  lxd-ct)
-    zfs_path="lxd/containers"
-  ;;
-
-  libvirt)
-    zfs_path="kvm"
-  ;;
-
-  lxd-kvm)
-    zfs_path="lxd/virtual-machines"
-  ;;
-
-  *)
-    echo "Unknown virttype: ${virttype}!"
-    exit 1
-esac
-
-# ssh tuning
-# https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Security_Guide/sect-Security_Guide-Encryption-OpenSSL_Intel_AES-NI_Engine.html
-cpu_aes=$(grep -m1 -w -o aes /proc/cpuinfo)
-if [ "$cpu_aes" == "aes" ];
-  then
-    ssh_opts=""
-fi
-
-f_list(){
-  if [ -z "$sourcedef" ];
-    then
-      say "$red" "No VM defined"
-      exit 1
-  fi
-
-  zfs list -t all -r "tank/$zrepds/$vm"
-  exit $?
 }
 
-f_zrep(){
-  if [ -z "$sourcedef" ];
-    then
-      say "$red" "No VM defined"
-      exit 1
-  fi
+f_validate_debug_quiet() {
+    f_check_arg "${@}" "full parameter list"
 
-  if [[ "$virttype" = "lxd-ct" || "$virttype" = "lxd-kvm" ]];
-    then
-      ssh "syncoid-backup@$s_host" lxc snapshot "$vm" zas-"${freq}-${date}"
-    else
-      ssh "syncoid-backup@$s_host" sudo zfs snapshot -r tank/"$zfs_path"/"$vm"@zas-"${freq}-${date}"
-  fi
-
-  # shellcheck disable=SC2068
-  syncoid -r ${ssh_opts[@]} ${syncoid_args[@]} syncoid-backup@"$s_host:tank/$zfs_path/$vm" "tank/$zrepds/$vm"
+    if [[ "${*}" =~ --debug ]] && [[ "${*}" =~ --quiet|-q ]];
+        then
+            f_say_fail "${COLOR_RED}The '--debug' and the '-q|--quiet' switches are mutually exclusive"
+    fi
 }
 
-if [ "$to_list" -eq 1 ];
-  then
-    f_list
-fi
+f_validate_freq() {
+    if [[ ! "$FREQ" =~ hourly|daily|weekly|monthly ]];
+        then
+            f_say_fail "${COLOR_RED}The frequency parameter is wrong: '${FREQ}'"
+    fi
+}
 
-f_zrep
+f_validate_number_of_sources() {
+    f_check_arg "$1" "source entry to check"
+
+    number_of_sources=$( cat "$FILE_CONFIG" | grep -v ^\# | grep -c "$1" )
+
+    if [ "$number_of_sources" -eq 1 ];
+        then
+            FULL_SOURCE_ROW=$( grep "$1" "$FILE_CONFIG" )
+
+        else
+            echo "Exactly one source entry must exist, but '${number_of_sources}' were found."
+
+            exit 1
+    fi
+}
+
+f_validate_source_format() {
+    # Is the source parameter a short or a full one?
+    if ( echo "$PARAM_SOURCE" | grep -qE "^[A-Za-z0-9\.-]+:[A-Za-z0-9\.-]+:(lxc|lxd-ct|lxd-kvm|libvirt)$" );
+        then
+            f_validate_number_of_sources "$PARAM_SOURCE"
+
+        elif ( echo "$PARAM_SOURCE" | grep -qE "^[A-Za-z0-9\.-]+$" ); then
+            f_validate_number_of_sources ":$PARAM_SOURCE:"
+
+        else
+            f_say_fail "${COLOR_RED}Wrong format of the source parameter"
+    fi
+}
+
+f_validate_source_list() {
+    f_check_arg "${@}" "full list parameter list"
+
+    if [[ "${*}" =~ --list|-l ]] && [[ "${*}" =~ --source|-s ]];
+        then
+            f_say_fail "${COLOR_RED}The '-s|--source' and the '-l|--list' switches are mutually exclusive"
+    fi
+}
+
+f_check_interactive
+f_set_colors
+f_process_args "${@}"
+f_validate_dataset_zrep
+f_validate_debug_quiet "${@}"
+f_validate_freq
+f_validate_source_format
+f_process_source_row
+f_set_hostname_in_path
+f_set_remote_zfs_path
+f_list_snapshots
+f_pull_snapshots
