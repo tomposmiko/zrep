@@ -54,7 +54,7 @@ fc_say_info "BEGIN: $(date "+%Y-%m-%d %H:%M")"
 
 for source_item in $(grep -v "^#" "$conffile"); do
     DATE=$(date "+%Y-%m-%d %H:%M:%S")
-    echo "${DATE} - $source_item"
+    fc_say_info "${DATE} - $source_item"
     zrep.sh --quiet -s "$source_item" -f "$FREQ" -c "$conffile" || true
 done
 
