@@ -37,14 +37,16 @@ f_process_args() {
 f_run_all() {
     fc_say_info "BEGIN: $(date "+%Y-%m-%d %H:%M")"
 
-    #for source_item in $(grep -v "^#" "$conffile"); do
-    local source_item
+    local source_line
+    local IFS='
+    '
 
-    while IFS= read -r source_item; do
+    # shellcheck disable=SC2013
+    for source_line in $(grep -v "^#" "$FILE_CONFIG"); do
         DATE=$(date "+%Y-%m-%d %H:%M:%S")
-        fc_say_info "${DATE} - $source_item"
-        zrep.sh --quiet -s "$source_item" -f "$FREQ" -c "$FILE_CONFIG" || true
-    done < <(grep -v "^#" "$FILE_CONFIG")
+        fc_say_info "${DATE} - $source_line"
+        zrep.sh --quiet -s "$source_line" -f "$FREQ" -c "$FILE_CONFIG" || true
+    done
 
     fc_say_info "FINISH: $(date "+%Y-%m-%d %H:%M")"
 }
