@@ -249,8 +249,6 @@ f_validate_source_list() {
     fi
 }
 
-fc_check_interactive
-fc_set_colors
 f_process_args "${@}"
 f_validate_dataset_zrep
 f_validate_debug_quiet "${@}"
