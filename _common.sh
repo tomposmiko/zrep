@@ -45,7 +45,7 @@ fc_say_fail() {
 fc_say_info() {
     fc_check_arg "$1" "info message"
 
-    echo -ne "$1"
+    echo -ne "${COLOR_GREEN}${1}"
     echo -e "$COLOR_NO"
 }
 
