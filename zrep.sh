@@ -37,33 +37,33 @@ f_process_args() {
                 fc_check_arg "$param" "config file"
                 FILE_CONFIG="$param"
                 shift 2
-        ;;
+            ;;
 
             -s|--source)
                 param="$2"
                 fc_check_arg "$param" "source definition"
                 PARAM_SOURCE="$param"
                 shift 2
-        ;;
+           ;;
 
             -f|--freq)
                 param="$2"
                 fc_check_arg "$param" "frequency"
                 FREQ="$param"
                 shift 2
-         ;;
+            ;;
 
             -b|--bwlimit)
                 param="$2"
                 fc_check_arg "$param" "bandwidth limit"
                 ARGS_SYNCOID+=("--target-bwlimit=${param}")
                 shift 2
-         ;;
+            ;;
 
             -E|--extended-vault)
                 HOST_IN_PATH=1
                 shift 1
-         ;;
+            ;;
 
             -l|--list)
                 param="$2"
@@ -71,21 +71,21 @@ f_process_args() {
                 PARAM_SOURCE="$param"
                 LIST_SNAPSHOTS="true"
                 shift 2
-         ;;
+            ;;
 
             -q|--quiet)
                 ARGS_SYNCOID+=("--quiet")
                 shift 1
-        ;;
+            ;;
 
             --debug)
                 ARGS_SYNCOID+=("--debug")
                 shift 1
-        ;;
+            ;;
 
             *)
                 f_usage
-        ;;
+            ;;
         esac
     done
 }
