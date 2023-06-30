@@ -44,7 +44,7 @@ f_run_all() {
         DATE=$(date "+%Y-%m-%d %H:%M:%S")
         fc_say_info "${DATE} - $source_item"
         zrep.sh --quiet -s "$source_item" -f "$FREQ" -c "$FILE_CONFIG" || true
-    done <<< "$FILE_CONFIG"
+    done < <(grep -v "^#" "$FILE_CONFIG")
 
     fc_say_info "FINISH: $(date "+%Y-%m-%d %H:%M")"
 }
