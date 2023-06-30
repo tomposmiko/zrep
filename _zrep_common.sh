@@ -7,12 +7,9 @@ set -e
 
 ARGS_SYNCOID=()
 DATASET_ZREP="tank/zrep"
-DATE=$(date +"%Y-%m-%d--%H")
 DIR_CONFIG="/etc/zrep"
-HOST_IN_PATH=0
 FILE_CONFIG="$DIR_CONFIG/zrep.conf"
 FREQ="daily"
-PARAM_SOURCE=""
 SSH_OPTS=()
 
 f_process_source_row() {

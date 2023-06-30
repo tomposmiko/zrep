@@ -13,7 +13,6 @@ HOST_IN_PATH=0
 FILE_CONFIG="$DIR_CONFIG/zrep.conf"
 FREQ="daily"
 LIST_SNAPSHOTS="false"
-PARAM_SOURCE=""
 SSH_OPTS=()
 
 f_list_snapshots() {
