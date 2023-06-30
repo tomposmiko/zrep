@@ -15,14 +15,14 @@ f_process_args() {
         case "$1" in
             -c|--conf)
                 PARAM=$2
-                f_check_arg "$PARAM" "config file"
+                fc_check_arg "$PARAM" "config file"
                 conffile="$PARAM"
                 shift 2
             ;;
 
             -f|--freq)
                 PARAM=$2
-                f_check_arg "$PARAM" "frequency"
+                fc_check_arg "$PARAM" "frequency"
                 FREQ="$PARAM"
                 shift 2
             ;;
