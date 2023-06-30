@@ -12,34 +12,12 @@ FILE_CONFIG="$DIR_CONFIG/zrep.conf"
 FREQ="daily"
 SSH_OPTS=()
 
-f_process_source_row() {
-    local IFS
-
-    IFS=":"
-
-    # shellcheck disable=SC2086
-    set $FULL_SOURCE_ROW
-
-    SOURCE_HOST="$1"
-    VM_NAME="$2"
-    VIRT_TYPE="$3"
-}
-
 f_validate_config_path() {
     if [ ! -f "$FILE_CONFIG" ];
         then
             fc_say_fail "Config file does not exist: '$FILE_CONFIG'"
     fi
 
-}
-
-f_validate_debug_quiet() {
-    fc_check_arg "${@}" "full parameter list"
-
-    if [[ "${*}" =~ --debug ]] && [[ "${*}" =~ --quiet|-q ]];
-        then
-            fc_say_fail "The '--debug' and the '-q|--quiet' switches are mutually exclusive"
-    fi
 }
 
 f_validate_freq() {

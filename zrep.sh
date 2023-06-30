@@ -90,13 +90,13 @@ f_process_args() {
     done
 }
 
-f_process_source_row() {
+f_process_source_line() {
     local IFS
 
     IFS=":"
 
     # shellcheck disable=SC2086
-    set $FULL_SOURCE_ROW
+    set $FULL_SOURCE_LINE
 
     SOURCE_HOST="$1"
     VM_NAME="$2"
@@ -216,7 +216,7 @@ f_validate_number_of_sources() {
 
     if [ "$number_of_sources" -eq 1 ];
         then
-            FULL_SOURCE_ROW=$( grep "$1" "$FILE_CONFIG" )
+            FULL_SOURCE_LINE=$( grep "$1" "$FILE_CONFIG" )
 
         else
             echo "Exactly one source entry must exist, but '${number_of_sources}' were found."
@@ -253,7 +253,7 @@ f_validate_dataset_zrep
 f_validate_debug_quiet "${@}"
 f_validate_freq
 f_validate_source_format
-f_process_source_row
+f_process_source_line
 f_set_hostname_in_path
 f_set_remote_zfs_path
 f_list_snapshots
