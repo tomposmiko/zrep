@@ -28,7 +28,7 @@ f_check_arg() {
 
     if [ -z "$arg" ];
         then
-            f_say_fail "${COLOR_RED}Missing argument: '${comment}'!"
+            f_say_fail "Missing argument: '${comment}'!"
 
             exit 1
     fi
@@ -189,11 +189,11 @@ f_set_hostname_in_path() {
 
             if [ ! "$dataset_type" == "filesystem" ];
                 then
-                    f_say_info "${COLOR_GREEN}Creating destination path: ${DATASET_ZREP}"
+                    f_say_info "Creating destination path: ${DATASET_ZREP}"
 
                     if ( ! zfs create "${DATASET_ZREP}" );
                         then
-                            f_say_fail "${COLOR_RED}Cannot create path: ${DATASET_ZREP}!"
+                            f_say_fail "Cannot create path: ${DATASET_ZREP}!"
                     fi
             fi
     fi
@@ -214,7 +214,7 @@ f_set_remote_zfs_path() {
         ;;
 
         *)
-            say "${COLOR_RED}Unknown VIRT_TYPE: ${VIRT_TYPE}"
+            say "Unknown VIRT_TYPE: ${VIRT_TYPE}"
 
             exit 1
     esac
@@ -243,6 +243,14 @@ f_usage() {
   exit 1
 }
 
+f_validate_config_path() {
+    if [ ! -f "$FILE_CONFIG" ];
+        then
+            f_say_fail "Config file does not exist: '$FILE_CONFIG'"
+    fi
+
+}
+
 f_validate_dataset_zrep() {
     local dataset_type
 
@@ -250,7 +258,7 @@ f_validate_dataset_zrep() {
 
     if [ ! "$dataset_type" == "filesystem" ];
         then
-            f_say_fail "${COLOR_RED}Missing root dataset: ('$DATASET_ZREP')"
+            f_say_fail "Missing root dataset: ('$DATASET_ZREP')"
     fi
 }
 
@@ -259,14 +267,14 @@ f_validate_debug_quiet() {
 
     if [[ "${*}" =~ --debug ]] && [[ "${*}" =~ --quiet|-q ]];
         then
-            f_say_fail "${COLOR_RED}The '--debug' and the '-q|--quiet' switches are mutually exclusive"
+            f_say_fail "The '--debug' and the '-q|--quiet' switches are mutually exclusive"
     fi
 }
 
 f_validate_freq() {
     if [[ ! "$FREQ" =~ hourly|daily|weekly|monthly ]];
         then
-            f_say_fail "${COLOR_RED}The frequency parameter is wrong: '${FREQ}'"
+            f_say_fail "The frequency parameter is wrong: '${FREQ}'"
     fi
 }
 
@@ -296,7 +304,7 @@ f_validate_source_format() {
             f_validate_number_of_sources ":$PARAM_SOURCE:"
 
         else
-            f_say_fail "${COLOR_RED}Wrong format of the source parameter"
+            f_say_fail "Wrong format of the source parameter"
     fi
 }
 
@@ -305,7 +313,7 @@ f_validate_source_list() {
 
     if [[ "${*}" =~ --list|-l ]] && [[ "${*}" =~ --source|-s ]];
         then
-            f_say_fail "${COLOR_RED}The '-s|--source' and the '-l|--list' switches are mutually exclusive"
+            f_say_fail "The '-s|--source' and the '-l|--list' switches are mutually exclusive"
     fi
 }
 
