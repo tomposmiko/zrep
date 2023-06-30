@@ -1,111 +1,61 @@
 #!/bin/bash
+# shellcheck disable=SC1091
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+set -e
 
-if /usr/bin/tty > /dev/null;
-    then
-        export console=1
-        interactive=1
-    else
-        export console=0
-fi
+. "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_common.sh"
 
-# https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
-uncolorize () { sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"; }
-if [[ "$interactive" -eq 1 ]]
-   then say() { echo -ne "$1";echo -e "$nocolor"; }
-                # Colors, yo!
-                export green="\e[1;32m"
-                export red="\e[1;31m"
-                export blue="\e[1;34m"
-                export purple="\e[1;35m"
-                export cyan="\e[1;36m"
-                export nocolor="\e[0m"
-   else
-                # do nothing
-                say() { true; }
-fi
+. "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_zrep_common.sh"
 
-f_check_switch_param(){
-    if echo x"$1" |grep -q ^x$;
-        then
-            say "$red" "Missing argument!"
-            exit 1
-    fi
+f_process_args() {
+    # Exit if no arguments!
+    (( "$#" )) || f_usage
+
+    while [ "$#" -gt "0" ]; do
+        case "$1" in
+            -c|--conf)
+                PARAM=$2
+                f_check_arg "$PARAM" "config file"
+                conffile="$PARAM"
+                shift 2
+            ;;
+
+            -f|--freq)
+                PARAM=$2
+                f_check_arg "$PARAM" "frequency"
+                FREQ="$PARAM"
+                shift 2
+            ;;
+
+            *)
+                f_usage
+            ;;
+        esac
+    done
 }
-
-date=`date +"%Y-%m-%d--%H"`
-confdir="/etc/zrep"
-#conffile="$confdir/zrep.conf"
-zrepds="zrep"
-custom_zrepds=""
-syncoid_args=""
-quiet="0"
-debug="0"
-sourceparam=""
-to_list=0
-extended_vault=""
-freq="daily"
-conf_extra="/etc/zrep/zrep-all.conf"
 
 f_usage(){
     echo "Usage:"
-    echo " $0 [-c conffile]"
+    echo "  $0 [-c conffile]"
     echo
-    echo "  -c|--conffile     <config file>"
-    echo "  -E|--extended-vault       relay --extended-vault setting"
+    echo "      -c|--conffile     <config file>"
+    echo "      -f|--freq         <frequency>"
     echo
+
     exit 1
 }
 
+f_process_args "${@}"
+f_validate_config_path
+f_validate_freq
 
-# Exit if no arguments!
-let "$#" || { f_usage; exit 1; }
+fc_say_info "BEGIN: $(date "+%Y-%m-%d %H:%M")"
 
-while [ "$#" -gt "0" ]; do
-  case "$1" in
-    -c|--conf)
-        PARAM=$2
-        f_check_switch_param "$PARAM"
-        conffile="$PARAM"
-        shift 2
-    ;;
 
-   -E|--extended-vault)
-        extended_vault="-E"
-        shift 1
-    ;;
-
-   -f|--freq)
-        PARAM=$2
-        freq="$PARAM"
-        shift 2
-    ;;
-
-    *)
-        f_usage
-    ;;
-   esac
-done
-
-if ! [ "$conffile" ]; then
-	say "$red" "!!! ERROR !!!"
-	say "$red" "No config file was given!"
-	exit 1
-fi
-
-# validate frequency possible param
-if ! [[ "$freq" =~ hourly|daily|weekly|monthly ]];
-  then
-    echo "Wrong frequency parameter!"
-    exit 1
-fi
-
-echo "BEGIN: `date "+%Y-%m-%d %H:%M"`"
-for i in `grep -v ^\# "$conffile"`; do
+for source_item in $(grep -v "^#" "$conffile"); do
     DATE=$(date "+%Y-%m-%d %H:%M:%S")
-    echo "${DATE} - $i"
-    zrep.sh --quiet -s "$i" -f "$freq" -c "$conffile" $extended_vault
+    echo "${DATE} - $source_item"
+    zrep.sh --quiet -s "$source_item" -f "$FREQ" -c "$conffile" || true
 done
 
-echo "END: `date "+%Y-%m-%d %H:%M"`"
+fc_say_info "FINISH: $(date "+%Y-%m-%d %H:%M")"
