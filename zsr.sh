@@ -2,10 +2,8 @@
 
 set -e
 
-# shellcheck source=_common.sh
 . "$( dirname "$( readlink /proc/$$/fd/255 2>/dev/null )" )/_common.sh"
 
-# shellcheck source=_zrep_common.sh
 . "$( dirname "$( readlink /proc/$$/fd/255 2>/dev/null )" )/_zrep_common.sh"
 
 f_create_temp_file() {

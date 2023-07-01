@@ -1,5 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2002,SC1091
 
 set -e
 
@@ -212,7 +211,7 @@ f_validate_freq() {
 f_validate_number_of_sources() {
     fc_check_arg "$1" "source entry to check"
 
-    number_of_sources=$( cat "$FILE_CONFIG" | grep -v ^\# | grep -c "$1" )
+    number_of_sources=$( grep -v ^\# "$FILE_CONFIG" | grep -c "$1" )
 
     if [ "$number_of_sources" -eq 1 ];
         then
