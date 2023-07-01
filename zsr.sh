@@ -3,23 +3,25 @@
 set -e
 
 # shellcheck source=_common.sh
-. "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_common.sh"
+. "$( dirname "$( readlink /proc/$$/fd/255 2>/dev/null )" )/_common.sh"
 
 # shellcheck source=_zrep_common.sh
-. "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_zrep_common.sh"
+. "$( dirname "$( readlink /proc/$$/fd/255 2>/dev/null )" )/_zrep_common.sh"
 
 f_create_temp_file() {
-    SNAP_LIST_ALL=$(mktemp /tmp/datasets.XXXXXX)
+    SNAP_LIST_ALL=$( mktemp /tmp/datasets.XXXXXX )
 }
 
 f_destroy_snaps() {
+    f_check_arg "${@}" "Full argument list"
+
     local IFS=$'\n'
     local snap_string
     local snap_path
 
     for snap_string in "${@}";do
         # shellcheck disable=SC2013
-        for snap_path in $(grep "$snap_string" "$SNAP_LIST_ALL");do
+        for snap_path in $( grep "$snap_string" "$SNAP_LIST_ALL" );do
             f_say_info "zfs destroy ${snap_path}"
 
             zfs destroy "${snap_path}"
