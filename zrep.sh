@@ -4,15 +4,9 @@ set -e
 
 . "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_common.sh"
 
-ARGS_SYNCOID=()
-DATASET_ZREP="tank/zrep"
 DATE=$(date +"%Y-%m-%d--%H")
-DIR_CONFIG="/etc/zrep"
 HOST_IN_PATH=0
-FILE_CONFIG="$DIR_CONFIG/zrep.conf"
-FREQ="daily"
 LIST_SNAPSHOTS="false"
-SSH_OPTS=()
 
 f_list_snapshots() {
     if [ "$LIST_SNAPSHOTS" == "true" ];
@@ -173,14 +167,6 @@ f_usage() {
   exit 1
 }
 
-f_validate_config_path() {
-    if [ ! -f "$FILE_CONFIG" ];
-        then
-            fc_say_fail "Config file does not exist: '$FILE_CONFIG'"
-    fi
-
-}
-
 f_validate_dataset_zrep() {
     local dataset_type
 
@@ -198,13 +184,6 @@ f_validate_debug_quiet() {
     if [[ "${*}" =~ --debug ]] && [[ "${*}" =~ --quiet|-q ]];
         then
             fc_say_fail "The '--debug' and the '-q|--quiet' switches are mutually exclusive"
-    fi
-}
-
-f_validate_freq() {
-    if [[ ! "$FREQ" =~ hourly|daily|weekly|monthly ]];
-        then
-            fc_say_fail "The frequency parameter is wrong: '${FREQ}'"
     fi
 }
 
