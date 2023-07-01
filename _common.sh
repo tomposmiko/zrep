@@ -69,6 +69,26 @@ fc_set_colors() {
 
 }
 
+fc_temp_file_create() {
+    if [[ ! "$1" == [a-zA-Z_]*([a-zA-Z_0-9]) ]];
+        then
+            fc_say_fail "Invalid argument, cannot be the variable name of the temporary file: $1"
+    fi
+
+    local tempfile
+
+    # shellcheck disable=SC2034
+    tempfile=$(mktemp "/tmp/${0##*/}.XXXX")
+
+    eval "$1"='$tempfile'
+}
+
+fc_temp_file_remove() {
+    fc_check_arg "$1" "temp file name"
+
+    rm -f "$SNAP_LIST_ALL"
+}
+
 fc_uncolorize() {
     # https://github.com/maxtsepkov/bash_colors/blob/master/bash_colors.sh
     sed -r "s/\x1B\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g"

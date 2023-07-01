@@ -8,17 +8,9 @@ set -e
 # shellcheck source=_zrep_common.sh
 . "$( dirname "$( readlink /proc/$$/fd/255 2>/dev/null )" )/_zrep_common.sh"
 
-f_create_temp_file() {
-    SNAP_LIST_ALL=$( mktemp /tmp/datasets.XXXXXX )
-}
-
 f_list_all_snaps() {
-    zfs list -t snap -r -H tank -o name -s name tank/lxd/containers | grep @snapshot- | sed -e 's@tank/lxd/containers/@@' -e 's,@snapshot-,/,' > "$SNAP_LIST_ALL"
+    zfs list -t snap -r -H tank -o name -s name tank/lxd/containers | grep @snapshot- | sed -e 's@tank/lxd/containers/@@' -e 's,@snapshot-,/,'
 
-}
-
-f_remove_temp_file() {
-    rm "$SNAP_LIST_ALL"
 }
 
 f_destroy_snaps() {
@@ -38,8 +30,8 @@ f_destroy_snaps() {
     done
 }
 
-f_create_temp_file
+fc_temp_file_create "SNAP_LIST_ALL"
 
-f_list_all_snaps
+f_list_all_snaps > "$SNAP_LIST_ALL"
 
-f_remove_temp_file
+fc_temp_file_remove "$SNAP_LIST_ALL"
