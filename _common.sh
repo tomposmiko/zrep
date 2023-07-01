@@ -2,7 +2,7 @@
 
 # The prefix 'fc_' refers to 'function common'
 
-
+IFS=$'\t\n'
 set -euo pipefail
 
 PATH="/root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

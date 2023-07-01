@@ -20,6 +20,7 @@ f_destroy_snaps() {
     local snap_path
 
     for snap_string in "${@}";do
+
         # shellcheck disable=SC2013
         for snap_path in $( grep "$snap_string" "$SNAP_LIST_ALL" );do
             f_say_info "zfs destroy ${snap_path}"
