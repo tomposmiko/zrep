@@ -38,8 +38,7 @@ f_run_all() {
     fc_say_info "BEGIN: $(date "+%Y-%m-%d %H:%M")"
 
     local source_line
-    local IFS='
-    '
+    local IFS=$'\n'
 
     # shellcheck disable=SC2013
     for source_line in $(grep -v "^#" "$FILE_CONFIG"); do
