@@ -4,6 +4,8 @@ set -e
 
 . "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_common.sh"
 
+. "$(dirname "$(readlink /proc/$$/fd/255 2>/dev/null)")/_zrep_common.sh"
+
 DATE=$(date +"%Y-%m-%d--%H")
 HOST_IN_PATH=0
 LIST_SNAPSHOTS="false"
